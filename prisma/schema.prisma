@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+enum GrowthStage {
+  SEED
+  SPROUT
+  SAPLING
+  GROWING_TREE
+  SCHOLARSHIP_TREE
+  LEGACY_FOREST
+}
+
+model User {
+  id            String    @id @default(uuid()) // Maps to auth.users.id
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(STUDENT)
+  
+  // Growth
+  growthStage   GrowthStage @default(SEED)
+  growthPercent Int         @default(0)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile            StudentProfile?
+  testScores         TestScores?
+  interests          Interest[]
+  countryPreferences CountryPreference[]
+  careerGoal         CareerGoal?
+  savedScholarships  SavedScholarship[]
+  progressRecords    UserProgress[]
+  notifications      Notification[]
+  roadmapTasks       RoadmapTask[]
+  documents          Document[]
+  activityLogs       ActivityLog[]
+  matches            ScholarshipMatch[]
+}
+
+model StudentProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  educationLevel    String?
+  sscGpa            Float?
+  hscGpa            Float?
+  undergraduateCgpa Float?
+  graduateCgpa      Float?
+  
+  institutionName   String?
+  
+  country           String?   @default("Bangladesh")
+  city              String?
+  district          String?
+  familyIncome      String?
+  gender            String?
+  disabilityStatus  String?
+  minorityStatus    String?
+  extracurricularScore Float @default(0)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model TestScores {
+  id       String @id @default(uuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ielts    Float?
+  toefl    Float?
+  sat      Int?
+  gre      Int?
+  gmat     Int?
+  duolingo Int?
+}
+
+model Interest {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  field  String
+  
+  @@unique([userId, field])
+}
+
+model CountryPreference {
+  id      String @id @default(uuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country String
+
+  @@unique([userId, country])
+}
+
+model CareerGoal {
+  id             String @id @default(uuid())
+  userId         String @unique
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  desiredDegree  String?
+  studyField     String?
+  longTermGoal   String?
+}
+
+enum FundingType {
+  FULLY_FUNDED
+  PARTIALLY_FUNDED
+  TUITION_WAIVER
+  RESEARCH_GRANT
+  EXCHANGE_PROGRAM
+}
+
+enum DegreeLevel {
+  UNDERGRADUATE
+  MASTERS
+  PHD
+}
+
+model Scholarship {
+  id                    String   @id @default(cuid())
+  slug                  String   @unique
+  title                 String
+  provider              String
+  country               String
+  city                  String?
+  university            String?
+  degreeLevel           DegreeLevel
+  fundingType           FundingType
+  amountCovered         String?
+  description           String @db.Text
+  eligibility           String @db.Text
+  benefits              String @db.Text
+  requiredGPA           Float?
+  requiredIELTS         Float?
+  requiredTOEFL         Float?
+  applicationFee        Float?
+  applicationLink       String
+  deadline              DateTime
+  documentsRequired     Json
+  fieldsOfStudy         Json
+  tags                  Json
+  isActive              Boolean @default(true)
+  strictGpa             Boolean @default(false)
+  strictLanguage        Boolean @default(false)
+  viewCount             Int @default(0)
+  saveCount             Int @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  matches               ScholarshipMatch[]
+  savedBy               SavedScholarship[]
+  analytics             ScholarshipAnalytics[]
+  uploadedDocuments     Document[]
+
+  @@index([title])
+  @@index([country])
+  @@index([deadline])
+  @@index([degreeLevel])
+  @@index([fundingType])
+  @@index([requiredGPA])
+}
+
+model ScholarshipMatch {
+  id            String   @id @default(cuid())
+  userId        String
+  scholarshipId String
+  score         Float
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scholarshipId])
+}
+
+model ScholarshipAnalytics {
+  id               String @id @default(cuid())
+  scholarshipId    String
+  views            Int    @default(0)
+  saves            Int    @default(0)
+  applyClicks      Int    @default(0)
+  createdAt        DateTime @default(now())
+  
+  scholarship      Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+}
+
+model SavedScholarship {
+  id            String      @id @default(cuid())
+  userId        String
+  scholarshipId String
+  createdAt     DateTime    @default(now())
+  status        String      @default("saved") // "saved", "applying", "submitted", "accepted", "rejected"
+  notes         String?
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scholarshipId])
+}
+
+model UserProgress {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  points    Int
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String
+  message    String
+  readStatus Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model RoadmapTask {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  status       String   @default("todo") // "todo", "done"
+  priority     String   @default("medium") // "low", "medium", "high"
+  dependencies String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Document {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scholarshipId String?
+  scholarship   Scholarship? @relation(fields: [scholarshipId], references: [id], onDelete: SetNull)
+  name          String
+  type          String
+  fileUrl       String
+  status        String       @default("uploaded") // "uploaded", "verified"
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model EligibilityScore {
+  id String @id @default(cuid())
+
+  userId String
+  scholarshipId String
+
+  matchScore Int
+  category String
+
+  breakdown Json
+  reasoning Json
+  flags Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([scholarshipId])
+}
