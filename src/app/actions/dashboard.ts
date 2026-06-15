@@ -83,13 +83,18 @@ export async function getUpcomingDeadlines() {
     where: { userId: user.id },
     include: {
       scholarship: {
-        select: { id: true, name: true, applicationDeadline: true, provider: true }
+        select: { id: true, title: true, deadline: true, provider: true }
       }
     }
   });
 
   return saved
-    .map(s => s.scholarship)
+    .map(s => ({
+      id: s.scholarship.id,
+      name: s.scholarship.title,
+      applicationDeadline: s.scholarship.deadline,
+      provider: s.scholarship.provider
+    }))
     .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
     .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())
     .slice(0, 5);

@@ -23,9 +23,9 @@ export default function VerifyEmailPage() {
       </p>
 
       <div className="space-y-4">
-        <Button variant="premium" className="w-full h-12 text-base font-semibold" asChild>
-          <Link href="/auth/login">Return to login</Link>
-        </Button>
+        <Link href="/auth/login" className="w-full">
+          <Button variant="premium" className="w-full h-12 text-base font-semibold">Return to login</Button>
+        </Link>
         <p className="text-sm text-muted-foreground mt-8">
           Didn&apos;t receive the email?{" "}
           <button className="text-primary font-medium hover:underline">

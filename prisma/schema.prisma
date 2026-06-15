@@ -1,9 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 enum Role {
@@ -48,6 +50,8 @@ model User {
   documents          Document[]
   activityLogs       ActivityLog[]
   matches            ScholarshipMatch[]
+  userDeadlines      UserDeadline[]
+  deadlineReminders  DeadlineReminder[]
 }
 
 model StudentProfile {
@@ -159,6 +163,7 @@ model Scholarship {
   strictLanguage        Boolean @default(false)
   viewCount             Int @default(0)
   saveCount             Int @default(0)
+  embedding             Unsupported("vector(1536)")?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -166,6 +171,8 @@ model Scholarship {
   savedBy               SavedScholarship[]
   analytics             ScholarshipAnalytics[]
   uploadedDocuments     Document[]
+  deadlines             ScholarshipDeadline[]
+  userDeadlines         UserDeadline[]
 
   @@index([title])
   @@index([country])
@@ -233,15 +240,27 @@ model Notification {
 }
 
 model RoadmapTask {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title        String
-  status       String   @default("todo") // "todo", "done"
-  priority     String   @default("medium") // "low", "medium", "high"
-  dependencies String[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title              String
+  description        String
+  category           String // "ESSENTIAL" | "HIGH_IMPACT" | "OPTIONAL"
+  priorityScore      Int
+
+  status             String   @default("NOT_STARTED") // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  estimatedTimeDays  Int
+
+  linkedScholarships String[]
+  dependencies       String[]
+
+  impactOnTreeGrowth Int
+  
+  aiSuggestion       String?  @db.Text
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Document {
@@ -256,6 +275,31 @@ model Document {
   status        String       @default("uploaded") // "uploaded", "verified"
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+
+  reviews       DocumentReview[]
+}
+
+model DocumentReview {
+  id               String   @id @default(cuid())
+  documentId       String
+  document         Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  overallScore     Int
+
+  clarityScore     Int
+  grammarScore     Int
+  structureScore   Int
+  impactScore      Int
+  relevanceScore   Int
+
+  scholarshipReadiness String
+
+  feedbackJson     Json
+  rewrittenText    String? @db.Text
+
+  createdAt        DateTime @default(now())
+
+  @@index([documentId])
 }
 
 model ActivityLog {
@@ -285,4 +329,54 @@ model EligibilityScore {
 
   @@index([userId])
   @@index([scholarshipId])
+}
+
+model ScholarshipDeadline {
+  id            String   @id @default(cuid())
+  scholarshipId String
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+  
+  title         String
+  description   String?
+  deadlineDate  DateTime
+  country       String?
+  degreeLevel   String?
+  
+  priorityScore Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  userDeadlines UserDeadline[]
+}
+
+model UserDeadline {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  scholarshipId   String
+  scholarship     Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+  
+  deadlineId      String
+  deadline        ScholarshipDeadline @relation(fields: [deadlineId], references: [id], onDelete: Cascade)
+  
+  status          String   @default("UPCOMING") // "UPCOMING" | "IN_PROGRESS" | "SUBMITTED" | "MISSED" | "COMPLETED"
+  progressPercent Int      @default(0)
+  
+  assignedAt      DateTime @default(now())
+  lastUpdated     DateTime @updatedAt
+
+  reminders       DeadlineReminder[]
+}
+
+model DeadlineReminder {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  deadlineId String
+  userDeadline UserDeadline @relation(fields: [deadlineId], references: [id], onDelete: Cascade)
+  
+  remindAt   DateTime
+  channel    String   @default("EMAIL") // "EMAIL" | "IN_APP" | "WHATSAPP"
+  sent       Boolean  @default(false)
 }
