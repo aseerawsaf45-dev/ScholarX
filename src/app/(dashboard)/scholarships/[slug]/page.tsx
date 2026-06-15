@@ -57,7 +57,7 @@ export default async function ScholarshipDetailsPage({
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary/10 via-background to-background rounded-3xl p-8 sm:p-12 border border-primary/10 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <Icon name="GraduationCap" size={200} />
+          <Icon name="GraduationCap" className="w-[200px] h-[200px]" />
         </div>
         
         <div className="relative z-10 max-w-3xl">
@@ -81,13 +81,13 @@ export default async function ScholarshipDetailsPage({
           </p>
 
           <div className="flex flex-wrap items-center gap-4">
-            <Button size="lg" className="rounded-xl px-8 h-12 text-base font-semibold shadow-lg shadow-primary/20" asChild>
-              <a href={scholarship.applicationLink} target="_blank" rel="noopener noreferrer">
-                Apply Now <Icon name="ExternalLink" size={18} className="ml-2" />
-              </a>
-            </Button>
+            <a href={scholarship.applicationLink} target="_blank" rel="noopener noreferrer">
+              <Button size="lg" className="rounded-xl px-8 h-12 text-base font-semibold shadow-lg shadow-primary/20">
+                Apply Now <Icon name="ExternalLink" size={16} className="ml-2" />
+              </Button>
+            </a>
             <Button size="lg" variant="outline" className="rounded-xl px-8 h-12 text-base">
-              <Icon name="BookmarkPlus" size={18} className="mr-2" /> Save
+              <Icon name="BookmarkPlus" size={16} className="mr-2" /> Save
             </Button>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default async function ScholarshipDetailsPage({
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(scholarship.documentsRequired as string[]).map((doc, i) => (
                 <li key={i} className="flex items-center p-3 rounded-lg bg-muted/50 border border-border">
-                  <Icon name="CheckCircle2" size={18} className="text-green-500 mr-3 shrink-0" />
+                  <Icon name="Check" size={16} className="text-green-500 mr-3 shrink-0" />
                   <span className="text-sm font-medium">{doc}</span>
                 </li>
               ))}
@@ -188,17 +188,17 @@ export default async function ScholarshipDetailsPage({
               </div>
 
               <div className="mt-8 space-y-3">
-                <Button className="w-full h-12 text-base font-semibold" asChild>
-                  <a href={scholarship.applicationLink} target="_blank" rel="noopener noreferrer">
+                <a href={scholarship.applicationLink} target="_blank" rel="noopener noreferrer" className="block w-full">
+                  <Button className="w-full h-12 text-base font-semibold">
                     Apply on Provider Site
-                  </a>
-                </Button>
+                  </Button>
+                </a>
                 <div className="flex gap-3">
                   <Button variant="outline" className="flex-1 h-12">
-                    <Icon name="BookmarkPlus" size={18} className="mr-2" /> Save
+                    <Icon name="BookmarkPlus" size={16} className="mr-2" /> Save
                   </Button>
                   <Button variant="outline" className="flex-1 h-12">
-                    <Icon name="Share2" size={18} className="mr-2" /> Share
+                    <Icon name="Share2" size={16} className="mr-2" /> Share
                   </Button>
                 </div>
               </div>

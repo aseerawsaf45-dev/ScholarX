@@ -25,7 +25,7 @@ export default function ScholarshipExplorerPage() {
       <div className="flex-none p-4 sm:p-8 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-center max-w-7xl mx-auto w-full">
           <div className="relative w-full max-w-md">
-            <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <Input 
               placeholder="Search scholarships, universities, countries..." 
               className="pl-10 h-12 rounded-xl bg-muted/50 border-transparent focus-visible:bg-background"
@@ -37,12 +37,14 @@ export default function ScholarshipExplorerPage() {
           <div className="flex items-center gap-3 w-full sm:w-auto">
             {/* Mobile Filter Trigger */}
             <Sheet>
-              <SheetTrigger asChild>
+              <SheetTrigger
+              render={
                 <Button variant="outline" className="lg:hidden shrink-0 h-12 px-4 rounded-xl">
-                  <Icon name="SlidersHorizontal" size={18} className="mr-2" />
+                  <Icon name="SlidersHorizontal" size={16} className="mr-2" />
                   Filters
                 </Button>
-              </SheetTrigger>
+              }
+            />
               <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto pt-10">
                 <FiltersSidebar />
               </SheetContent>

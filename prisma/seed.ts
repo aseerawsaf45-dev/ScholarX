@@ -44,7 +44,7 @@ async function main() {
       const fundingType = faker.helpers.enumValue(FundingType);
       
       const university = faker.helpers.arrayElement(UNIVERSITIES);
-      const provider = fundingType === "GOVERNMENT_SCHOLARSHIP" ? "Government" : faker.helpers.arrayElement(PROVIDERS);
+      const provider = faker.helpers.arrayElement(PROVIDERS);
       const title = `${university} ${faker.helpers.arrayElement(["Excellence", "Merit", "Global", "Future Leaders", "Innovation"])} Scholarship 2027`;
 
       const fields = faker.helpers.arrayElements(FIELDS_OF_STUDY, faker.number.int({ min: 1, max: 4 }));

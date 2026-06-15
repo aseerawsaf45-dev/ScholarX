@@ -77,7 +77,7 @@ export default function OnboardingPage() {
     } catch (e) {
       if (e instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
-        e.errors.forEach(err => {
+        e.issues.forEach(err => {
           if (err.path[0]) fieldErrors[err.path[0].toString()] = err.message;
         });
         setErrors(fieldErrors);

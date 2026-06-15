@@ -49,9 +49,9 @@ export default function ForgotPasswordPage() {
         <p className="text-muted-foreground mb-8">
           We sent a password reset link to your email.
         </p>
-        <Button variant="premium" className="w-full h-12 text-base font-semibold" asChild>
-          <Link href="/auth/login">Return to login</Link>
-        </Button>
+        <Link href="/auth/login" className="w-full">
+          <Button variant="premium" className="w-full h-12 text-base font-semibold">Return to login</Button>
+        </Link>
       </motion.div>
     );
   }

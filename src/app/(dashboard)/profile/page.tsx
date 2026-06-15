@@ -34,9 +34,9 @@ export default function ProfilePage() {
           <h1 className="text-3xl font-heading font-bold tracking-tight">Your Profile</h1>
           <p className="text-muted-foreground mt-2">Manage your academic and personal information.</p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/onboarding">Edit Profile</Link>
-        </Button>
+        <Link href="/onboarding">
+          <Button variant="outline">Edit Profile</Button>
+        </Link>
       </div>
 
       <ProfileCompletionMeter score={completionScore} />
