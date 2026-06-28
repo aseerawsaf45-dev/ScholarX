@@ -116,3 +116,65 @@ export async function addComment(postId: string, content: string) {
     return { error: error.message };
   }
 }
+
+export async function deletePost(postId: string) {
+  try {
+    const userId = await getCurrentUser();
+    if (!userId) return { error: "User not authenticated" };
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId }
+    });
+
+    if (!post) return { error: "Post not found" };
+
+    if (post.userId !== userId) {
+      const firstUser = await prisma.user.findFirst();
+      if (firstUser?.id !== userId) {
+        return { error: "Not authorized to delete this post" };
+      }
+    }
+
+    await prisma.comment.deleteMany({
+      where: { postId }
+    });
+
+    await prisma.post.delete({
+      where: { id: postId }
+    });
+
+    revalidatePath("/community");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteComment(commentId: string) {
+  try {
+    const userId = await getCurrentUser();
+    if (!userId) return { error: "User not authenticated" };
+
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId }
+    });
+
+    if (!comment) return { error: "Comment not found" };
+
+    if (comment.userId !== userId) {
+      const firstUser = await prisma.user.findFirst();
+      if (firstUser?.id !== userId) {
+        return { error: "Not authorized to delete this comment" };
+      }
+    }
+
+    await prisma.comment.delete({
+      where: { id: commentId }
+    });
+
+    revalidatePath("/community");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}

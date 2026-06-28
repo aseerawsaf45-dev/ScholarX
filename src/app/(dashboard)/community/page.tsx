@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
-import { getPosts, createPost, upvotePost, addComment } from "@/app/actions/community";
+import { getPosts, createPost, upvotePost, addComment, deletePost, deleteComment } from "@/app/actions/community";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Comment = {
@@ -80,7 +80,7 @@ export default function CommunityPage() {
     const res = await upvotePost(postId);
     if (res.success) {
       setPosts(prev =>
-        prev.map(p => (p.id === postId ? { ...p, upvotes: res.upvotes || p.upvotes + 1 } : p))
+          prev.map(p => (p.id === postId ? { ...p, upvotes: res.upvotes || p.upvotes + 1 } : p))
       );
     }
   };
@@ -94,6 +94,28 @@ export default function CommunityPage() {
     if (res.success) {
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
       fetchCommunityData();
+    }
+  };
+
+  const handleDeletePost = async (postId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this thread?")) return;
+    const res = await deletePost(postId);
+    if (res.success) {
+      fetchCommunityData();
+    } else {
+      alert(res.error || "Failed to delete post");
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this reply?")) return;
+    const res = await deleteComment(commentId);
+    if (res.success) {
+      fetchCommunityData();
+    } else {
+      alert(res.error || "Failed to delete comment");
     }
   };
 
@@ -241,14 +263,23 @@ export default function CommunityPage() {
                       </h3>
                     </div>
 
-                    {/* Upvote Button */}
-                    <button
-                      onClick={(e) => handleUpvote(post.id, e)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/80 bg-muted/40 hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all font-semibold text-xs shrink-0"
-                    >
-                      <Icon name="ArrowUp" size={14} />
-                      <span>{post.upvotes}</span>
-                    </button>
+                     {/* Upvote & Delete Actions */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={(e) => handleUpvote(post.id, e)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/80 bg-muted/40 hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all font-semibold text-xs"
+                      >
+                        <Icon name="ArrowUp" size={14} />
+                        <span>{post.upvotes}</span>
+                      </button>
+                      <button
+                        onClick={(e) => handleDeletePost(post.id, e)}
+                        className="p-1.5 rounded-lg border border-border/80 bg-muted/40 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 transition-all text-muted-foreground"
+                        title="Delete Thread"
+                      >
+                        <Icon name="trash-2" size={14} />
+                      </button>
+                    </div>
                   </div>
 
                   <p className={`text-sm text-muted-foreground leading-relaxed ${isExpanded ? "" : "line-clamp-2"}`}>
@@ -286,10 +317,19 @@ export default function CommunityPage() {
                             <p className="text-xs text-muted-foreground italic">No replies yet. Be the first to answer!</p>
                           ) : (
                             post.comments.map(comment => (
-                              <div key={comment.id} className="bg-muted/45 p-3 rounded-lg space-y-1">
+                              <div key={comment.id} className="bg-muted/45 p-3 rounded-lg space-y-1 relative group">
                                 <div className="flex justify-between text-[10px] text-muted-foreground">
                                   <span className="font-semibold text-foreground">{comment.user?.name || "Student"}</span>
-                                  <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                                    <button
+                                      onClick={(e) => handleDeleteComment(comment.id, e)}
+                                      className="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity p-0.5"
+                                      title="Delete Reply"
+                                    >
+                                      <Icon name="trash-2" size={10} />
+                                    </button>
+                                  </div>
                                 </div>
                                 <p className="text-xs text-muted-foreground leading-relaxed">{comment.content}</p>
                               </div>

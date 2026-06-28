@@ -20,46 +20,62 @@ export async function GET(request: Request) {
     const cursor = searchParams.get("cursor");
     const limit = 20;
 
-    // Building the where clause
-    const where: Prisma.ScholarshipWhereInput = {
-      isActive: true,
-    };
+    // Building the where conditions safely using AND to prevent OR collisions
+    const conditions: Prisma.ScholarshipWhereInput[] = [
+      { isActive: true }
+    ];
 
     if (search.trim()) {
-      // Postgres basic search syntax, fallback to contains if FTS isn't fully enabled
-      // If we added raw tsvector, we'd use queryRaw, but here we use contains for broad matching
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { university: { contains: search, mode: "insensitive" } },
-        { provider: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-      ];
+      conditions.push({
+        OR: [
+          { title: { contains: search, mode: "insensitive" } },
+          { university: { contains: search, mode: "insensitive" } },
+          { provider: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ]
+      });
     }
 
     if (country.length > 0) {
-      where.country = { in: country };
+      conditions.push({ country: { in: country } });
     }
 
     if (degreeLevel.length > 0) {
-      where.degreeLevel = { in: degreeLevel };
+      conditions.push({ degreeLevel: { in: degreeLevel } });
     }
 
     if (fundingType.length > 0) {
-      where.fundingType = { in: fundingType };
+      conditions.push({ fundingType: { in: fundingType } });
     }
 
-    if (minGpa !== undefined) {
-      where.requiredGPA = { lte: minGpa }; // Users with higher GPA qualify for lower required GPA
+    // Skip filtering when gpa is the default minimum (2.0 or lower)
+    if (minGpa !== undefined && minGpa > 2.0) {
+      conditions.push({
+        OR: [
+          { requiredGPA: { lte: minGpa } },
+          { requiredGPA: null }
+        ]
+      });
     }
 
-    if (minIelts !== undefined) {
-      where.requiredIELTS = { lte: minIelts };
+    // Skip filtering when IELTS is the default minimum (0)
+    if (minIelts !== undefined && minIelts > 0) {
+      conditions.push({
+        OR: [
+          { requiredIELTS: { lte: minIelts } },
+          { requiredIELTS: null }
+        ]
+      });
     }
 
     if (fieldsOfStudy.length > 0) {
-      where.fieldsOfStudy = {
-        array_contains: fieldsOfStudy, // Assuming JSON array contains
-      };
+      conditions.push({
+        OR: fieldsOfStudy.map(field => ({
+          fieldsOfStudy: {
+            array_contains: field
+          }
+        }))
+      });
     }
 
     if (deadlineStr && deadlineStr !== "all") {
@@ -67,9 +83,15 @@ export async function GET(request: Request) {
       if (!isNaN(days)) {
         const date = new Date();
         date.setDate(date.getDate() + days);
-        where.deadline = { lte: date, gte: new Date() };
+        conditions.push({
+          deadline: { lte: date, gte: new Date() }
+        });
       }
     }
+
+    const where: Prisma.ScholarshipWhereInput = {
+      AND: conditions
+    };
 
     // Building the orderBy clause
     let orderBy: Prisma.ScholarshipOrderByWithRelationInput | Prisma.ScholarshipOrderByWithRelationInput[] = {};
