@@ -14,6 +14,25 @@ async function getCurrentUser() {
     const firstUser = await prisma.user.findFirst();
     userId = firstUser?.id || null;
   }
+
+  if (userId) {
+    // Ensure the User record actually exists in the database to prevent foreign key errors
+    const exists = await prisma.user.findUnique({ where: { id: userId } });
+    if (!exists) {
+      try {
+        await prisma.user.create({
+          data: {
+            id: userId,
+            email: `${userId}@placeholder.com`,
+            name: "Community User",
+          }
+        });
+      } catch (err) {
+        console.error("Failed to create missing community user record:", err);
+      }
+    }
+  }
+
   return userId;
 }
 
