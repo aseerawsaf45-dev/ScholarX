@@ -7,7 +7,9 @@ import { Icon } from "@/components/ui/icon";
 import { motion } from "framer-motion";
 import { fadeUp } from "@/lib/motion";
 
-export default function VerifyEmailPage() {
+import { Suspense } from "react";
+
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
 
@@ -34,5 +36,13 @@ export default function VerifyEmailPage() {
         </p>
       </div>
     </motion.div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="text-center p-8 text-muted-foreground">Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
