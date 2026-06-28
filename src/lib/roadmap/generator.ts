@@ -101,9 +101,9 @@ export async function generateRoadmapTasks(userId: string): Promise<RoadmapTaskP
   }
 
   // 4. Documents (CV, SOP, Passport)
-  const hasCV = user.documents.some(d => d.documentType === "CV");
-  const hasSOP = user.documents.some(d => d.documentType === "SOP");
-  const hasPassport = user.documents.some(d => d.documentType === "OTHER" && d.fileName.toLowerCase().includes("passport"));
+  const hasCV = user.documents.some(d => d.type === "CV");
+  const hasSOP = user.documents.some(d => d.type === "SOP");
+  const hasPassport = user.documents.some(d => d.type === "OTHER" && d.name.toLowerCase().includes("passport"));
 
   if (!hasPassport) {
     add({
@@ -218,7 +218,6 @@ ${topTasks.map(t => `${t._localId} | ${t.title}`).join("\n")}
     const { text } = await generateText({
       model: groq('llama3-8b-8192'),
       prompt,
-      maxTokens: 500,
     });
 
     const lines = text.split('\n').filter(l => l.includes('|'));

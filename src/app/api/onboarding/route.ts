@@ -11,6 +11,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
+  // Ensure the User record exists in our database
+  await prisma.user.upsert({
+    where: { id: user.id },
+    update: {
+      email: user.email,
+      name: user.user_metadata?.first_name 
+        ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
+        : user.email?.split('@')[0] || 'User',
+    },
+    create: {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.first_name 
+        ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
+        : user.email?.split('@')[0] || 'User',
+    }
+  });
+
   try {
     const { step, data } = await request.json();
 

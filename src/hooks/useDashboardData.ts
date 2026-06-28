@@ -6,8 +6,16 @@ import {
   getNotifications, 
   markNotificationRead,
   getRecentActivity,
-  getUpcomingDeadlines
+  getUpcomingDeadlines,
+  getDashboardData
 } from "@/app/actions/dashboard";
+
+export function useDashboardData() {
+  return useQuery({
+    queryKey: ["dashboardData"],
+    queryFn: () => getDashboardData(),
+  });
+}
 
 export function useUserProgress() {
   return useQuery({
@@ -30,6 +38,7 @@ export function useRoadmapTasks() {
       queryClient.invalidateQueries({ queryKey: ["roadmapTasks"] });
       queryClient.invalidateQueries({ queryKey: ["recentActivity"] });
       queryClient.invalidateQueries({ queryKey: ["userProgress"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
     },
   });
 
@@ -48,6 +57,7 @@ export function useNotifications() {
     mutationFn: (id: string) => markNotificationRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
     },
   });
 
@@ -65,5 +75,18 @@ export function useUpcomingDeadlines() {
   return useQuery({
     queryKey: ["upcomingDeadlines"],
     queryFn: () => getUpcomingDeadlines(),
+  });
+}
+
+export function useToggleTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, status }: { taskId: string; status: string }) => toggleTaskStatus(taskId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      queryClient.invalidateQueries({ queryKey: ["roadmapTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["recentActivity"] });
+      queryClient.invalidateQueries({ queryKey: ["userProgress"] });
+    },
   });
 }

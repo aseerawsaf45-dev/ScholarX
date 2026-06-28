@@ -34,12 +34,12 @@ export default async function DocumentsPage() {
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">My Documents</h1>
-          <p className="text-slate-400 mt-1">Manage your uploaded application documents and AI reviews.</p>
+          <h1 className="text-3xl font-bold text-foreground">My Documents</h1>
+          <p className="text-muted-foreground mt-1">Manage your uploaded application documents and AI reviews.</p>
         </div>
         <Link 
           href="/upload" 
-          className="bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-500/20"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary/20"
         >
           <Icon name="Upload" className="w-5 h-5" />
           Upload Document
@@ -47,17 +47,17 @@ export default async function DocumentsPage() {
       </div>
 
       {documents.length === 0 ? (
-        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-12 text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4 text-slate-500">
+        <div className="bg-card backdrop-blur-xl border border-border rounded-2xl p-12 text-center flex flex-col items-center">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4 text-muted-foreground">
             <Icon name="FileText" className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-200 mb-2">No documents yet</h2>
-          <p className="text-slate-400 max-w-md mb-6">
+          <h2 className="text-xl font-semibold text-foreground mb-2">No documents yet</h2>
+          <p className="text-muted-foreground max-w-md mb-6">
             Upload your CV, Statement of Purpose, or other application documents to get instant AI feedback and improvements.
           </p>
           <Link 
             href="/upload" 
-            className="text-primary-400 hover:text-primary-300 font-medium flex items-center gap-2"
+            className="text-primary hover:text-primary/80 font-medium flex items-center gap-2"
           >
             Upload your first document <Icon name="ArrowRight" className="w-4 h-4" />
           </Link>
@@ -70,10 +70,10 @@ export default async function DocumentsPage() {
               <Link 
                 key={doc.id} 
                 href={`/documents/${doc.id}`}
-                className="bg-slate-900/50 hover:bg-slate-800/80 backdrop-blur-xl border border-slate-800 hover:border-slate-700 rounded-2xl p-6 transition-all group flex flex-col"
+                className="bg-card hover:bg-muted/50 backdrop-blur-xl border border-border hover:border-primary/20 rounded-2xl p-6 transition-all group flex flex-col"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-slate-800/50 rounded-xl text-slate-400 group-hover:text-primary-400 group-hover:bg-primary-500/10 transition-colors">
+                  <div className="p-3 bg-muted rounded-xl text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                     <Icon name="FileText" className="w-6 h-6" />
                   </div>
                   {latestReview ? (
@@ -83,7 +83,7 @@ export default async function DocumentsPage() {
                         latestReview.overallScore >= 60 ? 'text-yellow-500' : 'text-red-500'
                       }`}>
                         {latestReview.overallScore}
-                        <span className="text-xs text-slate-500 ml-1">/100</span>
+                        <span className="text-xs text-muted-foreground/60 ml-1">/100</span>
                       </span>
                       <ReadinessBadge status={latestReview.scholarshipReadiness as any} />
                     </div>
@@ -95,18 +95,18 @@ export default async function DocumentsPage() {
                   )}
                 </div>
               
-              <h3 className="font-semibold text-slate-200 truncate mb-1 group-hover:text-primary-400 transition-colors">
+              <h3 className="font-semibold text-foreground truncate mb-1 group-hover:text-primary transition-colors">
                 {doc.name}
               </h3>
-              <p className="text-sm text-slate-500 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 {doc.type}
               </p>
               
-              <div className="mt-auto pt-4 border-t border-slate-800 flex items-center justify-between text-sm">
-                <span className="text-slate-400">
+              <div className="mt-auto pt-4 border-t border-border/60 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
                   {doc.createdAt.toLocaleDateString()}
                 </span>
-                <span className="text-primary-400 font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+                <span className="text-primary font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
                   View Analysis <Icon name="ArrowRight" className="w-4 h-4" />
                 </span>
               </div>

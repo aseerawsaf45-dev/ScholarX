@@ -30,11 +30,11 @@ export default async function RoadmapPage() {
       {/* Header & Tree Progress */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 flex flex-col justify-center">
-          <h1 className="text-3xl font-bold text-slate-100 mb-2 flex items-center gap-3">
-            <Icon name="Map" className="text-primary-500 w-8 h-8" />
+          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+            <Icon name="Map" className="text-primary w-8 h-8" />
             AI Study-Abroad Roadmap
           </h1>
-          <p className="text-slate-400 text-lg max-w-xl">
+          <p className="text-muted-foreground text-lg max-w-xl">
             Your personalized, step-by-step action plan to achieve your study-abroad goals. Complete tasks to grow your Scholarship Tree.
           </p>
         </div>

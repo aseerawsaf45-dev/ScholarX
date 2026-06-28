@@ -7,7 +7,14 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 300000, // 5 minutes
+        refetchOnWindowFocus: false,
+      },
+    },
+  }));
   const setUser = useAuthStore((state) => state.setUser);
   const supabase = createClient();
 

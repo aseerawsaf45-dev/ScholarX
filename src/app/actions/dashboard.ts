@@ -3,7 +3,15 @@
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 
+import { headers } from "next/headers";
+
 async function getAuthUser() {
+  const headerList = await headers();
+  const userId = headerList.get("x-user-id");
+  if (userId) {
+    return { id: userId };
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
@@ -98,4 +106,93 @@ export async function getUpcomingDeadlines() {
     .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
     .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())
     .slice(0, 5);
+}
+
+export async function getDashboardData() {
+  const user = await getAuthUser();
+  const userId = user.id;
+
+  const [dbUser, roadmapTasks, notifications, activityLogs, saved] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        growthStage: true,
+        growthPercent: true,
+        profile: true,
+        testScores: true,
+      }
+    }),
+    prisma.roadmapTask.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' }
+    }),
+    prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    }),
+    prisma.activityLog.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    }),
+    prisma.savedScholarship.findMany({
+      where: { userId },
+      include: {
+        scholarship: {
+          select: { id: true, title: true, deadline: true, provider: true }
+        }
+      }
+    })
+  ]);
+
+  // Calculate profile completion
+  let profileCompletion = 0;
+  const profile = dbUser?.profile;
+  if (profile) {
+    const fieldsToTrack = [
+      'educationLevel',
+      'sscGpa',
+      'hscGpa',
+      'undergraduateCgpa',
+      'institutionName',
+      'country',
+      'city',
+      'district',
+      'familyIncome',
+      'gender'
+    ];
+    let filledCount = 0;
+    fieldsToTrack.forEach(field => {
+      const val = profile[field as keyof typeof profile];
+      if (val !== null && val !== undefined && val !== '') {
+        filledCount++;
+      }
+    });
+    profileCompletion = Math.min(100, Math.round((filledCount / fieldsToTrack.length) * 100));
+  }
+
+  // Format upcoming deadlines
+  const upcomingDeadlines = saved
+    .map(s => ({
+      id: s.scholarship.id,
+      name: s.scholarship.title,
+      applicationDeadline: s.scholarship.deadline,
+      provider: s.scholarship.provider
+    }))
+    .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
+    .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())
+    .slice(0, 5);
+
+  return {
+    userProgress: {
+      growthStage: dbUser?.growthStage || "SEED",
+      growthPercent: dbUser?.growthPercent || 0,
+      profileCompletion
+    },
+    roadmapTasks,
+    notifications,
+    activityLogs,
+    upcomingDeadlines
+  };
 }

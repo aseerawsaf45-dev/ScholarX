@@ -1,13 +1,14 @@
 "use client";
 
-import { useRecentActivity } from "@/hooks/useDashboardData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 
 export function RecentActivityWidget() {
-  const { data: activities = [], isLoading, isError } = useRecentActivity();
+  const { data, isLoading, isError } = useDashboardData();
+  const activities = data?.activityLogs || [];
 
   if (isLoading) {
     return <Skeleton className="w-full h-64 rounded-xl" />;

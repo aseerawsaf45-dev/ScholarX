@@ -40,5 +40,28 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  return supabaseResponse
+  const requestHeaders = new Headers(request.headers)
+  if (user) {
+    requestHeaders.set('x-user-id', user.id)
+  }
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+
+  // Copy cookies set during session refresh
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie.name, cookie.value, {
+      path: cookie.path,
+      domain: cookie.domain,
+      maxAge: cookie.maxAge,
+      secure: cookie.secure,
+      httpOnly: cookie.httpOnly,
+      sameSite: cookie.sameSite,
+    })
+  })
+
+  return response
 }

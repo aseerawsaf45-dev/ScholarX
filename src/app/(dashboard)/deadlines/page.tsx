@@ -13,8 +13,8 @@ export default async function DeadlinesPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 h-[calc(100vh-8rem)] flex flex-col">
       <div>
-        <h1 className="text-3xl font-bold text-slate-100">Deadlines</h1>
-        <p className="text-slate-400 mt-1">Track your upcoming scholarship applications and deadlines.</p>
+        <h1 className="text-3xl font-bold text-foreground">Deadlines</h1>
+        <p className="text-muted-foreground mt-1">Track your upcoming scholarship applications and deadlines.</p>
       </div>
 
       <div className="flex-1 min-h-0">

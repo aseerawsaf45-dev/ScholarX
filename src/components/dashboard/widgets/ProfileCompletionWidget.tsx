@@ -1,6 +1,6 @@
 "use client";
 
-import { useUserProgress } from "@/hooks/useDashboardData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -8,7 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 
 export function ProfileCompletionWidget() {
-  const { data: progress, isLoading, isError } = useUserProgress();
+  const { data, isLoading, isError } = useDashboardData();
+  const progress = data?.userProgress;
 
   if (isLoading) {
     return <Skeleton className="w-full h-48 rounded-xl" />;
