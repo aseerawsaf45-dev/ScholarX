@@ -4,34 +4,39 @@ import prisma from '@/lib/prisma';
 import { calculateGrowthPercentage } from '@/lib/growth-engine';
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-  }
-
   try {
-    const fullProfile = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        profile: true,
-        testScores: true,
-        interests: true,
-        countryPreferences: true,
-        careerGoal: true,
-      }
-    });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!fullProfile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const completionScore = calculateGrowthPercentage(fullProfile);
+    try {
+      const fullProfile = await prisma.user.findUnique({
+        where: { id: user.id },
+        include: {
+          profile: true,
+          testScores: true,
+          interests: true,
+          countryPreferences: true,
+          careerGoal: true,
+        }
+      });
 
-    return NextResponse.json({ profile: fullProfile, completionScore });
-  } catch (error) {
-    console.error("Fetch profile error:", error);
-    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
+      if (!fullProfile) {
+        return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      }
+
+      const completionScore = calculateGrowthPercentage(fullProfile);
+
+      return NextResponse.json({ profile: fullProfile, completionScore });
+    } catch (dbError) {
+      console.error("Database error fetching profile:", dbError);
+      return NextResponse.json({ error: 'Failed to fetch profile from database' }, { status: 500 });
+    }
+  } catch (error: any) {
+    console.error("Profile API error:", error);
+    return NextResponse.json({ error: error.message || 'Failed to fetch data' }, { status: 500 });
   }
 }

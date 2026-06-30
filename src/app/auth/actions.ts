@@ -63,7 +63,6 @@ export async function signup(formData: FormData) {
           create: {
             id: authData.user.id,
             name: `${firstName} ${lastName}`,
-            email: email,
           }
         })
       } catch (e) {
@@ -71,7 +70,7 @@ export async function signup(formData: FormData) {
       }
     }
 
-    redirect('/auth/verify-email?email=' + encodeURIComponent(email))
+    redirect('/onboarding')
   } catch (err: any) {
     if (err && typeof err === 'object' && err.digest?.startsWith('NEXT_REDIRECT')) {
       throw err;

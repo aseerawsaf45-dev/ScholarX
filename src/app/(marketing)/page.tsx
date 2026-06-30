@@ -45,7 +45,7 @@ export default function Homepage() {
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
               <Button variant="premium" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 rounded-xl" asChild>
-                <Link href="/onboarding">Start Growing</Link>
+                <Link href="/auth/signup">Start Growing</Link>
               </Button>
               <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 rounded-xl bg-background/50 backdrop-blur-sm" asChild>
                 <Link href="/scholarships">Explore Scholarships</Link>

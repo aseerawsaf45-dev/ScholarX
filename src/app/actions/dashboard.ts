@@ -1,198 +1,199 @@
 "use server";
 
-import prisma from "@/lib/prisma";
-import { createClient } from "@/utils/supabase/server";
-
+import { createClient } from "@supabase/supabase-js";
+import { createClient as createAuthClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
+
+function getDb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
 
 async function getAuthUser() {
   const headerList = await headers();
   const userId = headerList.get("x-user-id");
-  if (userId) {
-    return { id: userId };
-  }
+  if (userId) return { id: userId };
 
-  const supabase = await createClient();
+  const supabase = await createAuthClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
   return user;
 }
 
 export async function getUserProgress() {
-  const user = await getAuthUser();
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { growthStage: true, growthPercent: true }
-  });
-  return dbUser || { growthStage: "SEED", growthPercent: 0 };
+  try {
+    const db = getDb();
+    const user = await getAuthUser();
+    const { data } = await db
+      .from("User")
+      .select("growthStage, growthPercent")
+      .eq("id", user.id)
+      .single();
+    return data || { growthStage: "SEED", growthPercent: 0 };
+  } catch { return { growthStage: "SEED", growthPercent: 0 }; }
 }
 
 export async function getRoadmapTasks() {
-  const user = await getAuthUser();
-  return prisma.roadmapTask.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: 'asc' }
-  });
+  try {
+    const db = getDb();
+    const user = await getAuthUser();
+    const { data } = await db
+      .from("RoadmapTask")
+      .select("*")
+      .eq("userId", user.id)
+      .order("createdAt", { ascending: true });
+    return data || [];
+  } catch { return []; }
 }
 
 export async function toggleTaskStatus(taskId: string, newStatus: string) {
-  const user = await getAuthUser();
-  
-  const task = await prisma.roadmapTask.update({
-    where: { id: taskId, userId: user.id },
-    data: { status: newStatus }
-  });
+  try {
+    const db = getDb();
+    const user = await getAuthUser();
+    const { data: task } = await db
+      .from("RoadmapTask")
+      .update({ status: newStatus, updatedAt: new Date().toISOString() })
+      .eq("id", taskId)
+      .eq("userId", user.id)
+      .select()
+      .single();
 
-  // Example of triggering growth on task completion
-  if (newStatus === "done") {
-    // You could call a growth logic module here
-    await prisma.activityLog.create({
-      data: {
+    if (newStatus === "done" && task) {
+      await db.from("ActivityLog").insert({
+        id: crypto.randomUUID(),
         userId: user.id,
         action: "COMPLETED_TASK",
-        details: task.title
-      }
-    });
-  }
-
-  return task;
+        details: task.title,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return task;
+  } catch (e: any) { throw new Error(e.message); }
 }
 
 export async function getNotifications() {
-  const user = await getAuthUser();
-  return prisma.notification.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 20
-  });
+  try {
+    const db = getDb();
+    const user = await getAuthUser();
+    const { data } = await db
+      .from("Notification")
+      .select("*")
+      .eq("userId", user.id)
+      .order("createdAt", { ascending: false })
+      .limit(20);
+    return data || [];
+  } catch { return []; }
 }
 
 export async function markNotificationRead(id: string) {
-  const user = await getAuthUser();
-  return prisma.notification.update({
-    where: { id, userId: user.id },
-    data: { readStatus: true }
-  });
+  try {
+    const db = getDb();
+    const user = await getAuthUser();
+    const { data } = await db
+      .from("Notification")
+      .update({ readStatus: true })
+      .eq("id", id)
+      .eq("userId", user.id)
+      .select()
+      .single();
+    return data;
+  } catch { return null; }
 }
 
 export async function getRecentActivity() {
-  const user = await getAuthUser();
-  return prisma.activityLog.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 10
-  });
+  try {
+    const db = getDb();
+    const user = await getAuthUser();
+    const { data } = await db
+      .from("ActivityLog")
+      .select("*")
+      .eq("userId", user.id)
+      .order("createdAt", { ascending: false })
+      .limit(10);
+    return data || [];
+  } catch { return []; }
 }
 
 export async function getUpcomingDeadlines() {
-  const user = await getAuthUser();
-  // Fetch scholarships saved by the user with upcoming deadlines
-  const saved = await prisma.savedScholarship.findMany({
-    where: { userId: user.id },
-    include: {
-      scholarship: {
-        select: { id: true, title: true, deadline: true, provider: true }
-      }
-    }
-  });
+  try {
+    const db = getDb();
+    const user = await getAuthUser();
+    const { data: saved } = await db
+      .from("SavedScholarship")
+      .select("scholarship:Scholarship(id, title, deadline, provider)")
+      .eq("userId", user.id);
 
-  return saved
-    .map(s => ({
-      id: s.scholarship.id,
-      name: s.scholarship.title,
-      applicationDeadline: s.scholarship.deadline,
-      provider: s.scholarship.provider
-    }))
-    .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
-    .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())
-    .slice(0, 5);
+    return (saved || [])
+      .map((s: any) => ({
+        id: s.scholarship?.id,
+        name: s.scholarship?.title,
+        applicationDeadline: s.scholarship?.deadline,
+        provider: s.scholarship?.provider,
+      }))
+      .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
+      .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())
+      .slice(0, 5);
+  } catch { return []; }
 }
 
 export async function getDashboardData() {
-  const user = await getAuthUser();
-  const userId = user.id;
+  try {
+    const db = getDb();
+    const user = await getAuthUser();
+    const userId = user.id;
 
-  const [dbUser, roadmapTasks, notifications, activityLogs, saved] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        growthStage: true,
-        growthPercent: true,
-        profile: true,
-        testScores: true,
-      }
-    }),
-    prisma.roadmapTask.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'asc' }
-    }),
-    prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 20
-    }),
-    prisma.activityLog.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 10
-    }),
-    prisma.savedScholarship.findMany({
-      where: { userId },
-      include: {
-        scholarship: {
-          select: { id: true, title: true, deadline: true, provider: true }
-        }
-      }
-    })
-  ]);
+    const [userResult, tasksResult, notificationsResult, activityResult, savedResult] = await Promise.all([
+      db.from("User").select("growthStage, growthPercent, profile:StudentProfile(*)").eq("id", userId).single(),
+      db.from("RoadmapTask").select("*").eq("userId", userId).order("createdAt", { ascending: true }),
+      db.from("Notification").select("*").eq("userId", userId).order("createdAt", { ascending: false }).limit(20),
+      db.from("ActivityLog").select("*").eq("userId", userId).order("createdAt", { ascending: false }).limit(10),
+      db.from("SavedScholarship").select("scholarship:Scholarship(id, title, deadline, provider)").eq("userId", userId),
+    ]);
 
-  // Calculate profile completion
-  let profileCompletion = 0;
-  const profile = dbUser?.profile;
-  if (profile) {
-    const fieldsToTrack = [
-      'educationLevel',
-      'sscGpa',
-      'hscGpa',
-      'undergraduateCgpa',
-      'institutionName',
-      'country',
-      'city',
-      'district',
-      'familyIncome',
-      'gender'
-    ];
-    let filledCount = 0;
-    fieldsToTrack.forEach(field => {
-      const val = profile[field as keyof typeof profile];
-      if (val !== null && val !== undefined && val !== '') {
-        filledCount++;
-      }
-    });
-    profileCompletion = Math.min(100, Math.round((filledCount / fieldsToTrack.length) * 100));
+    const dbUser = userResult.data;
+    const profile: any = Array.isArray(dbUser?.profile) ? dbUser?.profile[0] : dbUser?.profile;
+
+    // Profile completion
+    let profileCompletion = 0;
+    if (profile) {
+      const fields = ['educationLevel','sscGpa','hscGpa','undergraduateCgpa','institutionName','country','city','district','familyIncome','gender'];
+      const filled = fields.filter(f => profile[f] !== null && profile[f] !== undefined && profile[f] !== '').length;
+      profileCompletion = Math.min(100, Math.round((filled / fields.length) * 100));
+    }
+
+    const upcomingDeadlines = (savedResult.data || [])
+      .map((s: any) => ({
+        id: s.scholarship?.id,
+        name: s.scholarship?.title,
+        applicationDeadline: s.scholarship?.deadline,
+        provider: s.scholarship?.provider,
+      }))
+      .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
+      .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())
+      .slice(0, 5);
+
+    return {
+      userProgress: {
+        growthStage: dbUser?.growthStage || "SEED",
+        growthPercent: dbUser?.growthPercent || 0,
+        profileCompletion,
+      },
+      roadmapTasks: tasksResult.data || [],
+      notifications: notificationsResult.data || [],
+      activityLogs: activityResult.data || [],
+      upcomingDeadlines,
+    };
+  } catch (error: any) {
+    console.error("getDashboardData error:", error.message);
+    return {
+      userProgress: { growthStage: "SEED", growthPercent: 0, profileCompletion: 0 },
+      roadmapTasks: [],
+      notifications: [],
+      activityLogs: [],
+      upcomingDeadlines: [],
+    };
   }
-
-  // Format upcoming deadlines
-  const upcomingDeadlines = saved
-    .map(s => ({
-      id: s.scholarship.id,
-      name: s.scholarship.title,
-      applicationDeadline: s.scholarship.deadline,
-      provider: s.scholarship.provider
-    }))
-    .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
-    .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())
-    .slice(0, 5);
-
-  return {
-    userProgress: {
-      growthStage: dbUser?.growthStage || "SEED",
-      growthPercent: dbUser?.growthPercent || 0,
-      profileCompletion
-    },
-    roadmapTasks,
-    notifications,
-    activityLogs,
-    upcomingDeadlines
-  };
 }

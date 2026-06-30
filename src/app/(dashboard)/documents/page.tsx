@@ -14,21 +14,19 @@ export default async function DocumentsPage() {
   }
 
   const documents = await prisma.document.findMany({
-    where: {
-      userId: user.id,
-    },
+    where: { userId: user.id },
     include: {
       reviews: {
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: { createdAt: 'desc' },
         take: 1,
       },
     },
-    orderBy: {
-      createdAt: 'desc',
-    },
+    orderBy: { createdAt: 'desc' },
+  }).catch((e) => {
+    console.error('Documents DB error:', e.message);
+    return [];
   });
+
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
