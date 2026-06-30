@@ -14,7 +14,6 @@ import * as z from "zod";
 
 const step1Schema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
   educationLevel: z.string().min(1, "Education level is required"),
   hscGpa: z.string().optional(),
   institutionName: z.string().optional(),
@@ -58,7 +57,6 @@ export default function OnboardingPage() {
             const p = data.profile;
             const existingData = {
               name: p.name || "",
-              email: p.email || "",
               educationLevel: p.profile?.educationLevel || "",
               institutionName: p.profile?.institutionName || "",
               hscGpa: p.profile?.hscGpa?.toString() || "",
@@ -169,15 +167,7 @@ export default function OnboardingPage() {
     });
   };
 
-  // Auto-save on formData changes with debounce
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (Object.keys(formData).length > 0 && step > 0) {
-        mutation.mutate({ step, data: formData });
-      }
-    }, 2000);
-    return () => clearTimeout(handler);
-  }, [formData, step]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Auto-save removed — data is saved when user clicks Next
 
   if (authError) {
     return (
@@ -226,16 +216,7 @@ export default function OnboardingPage() {
                   />
                   {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Email Address</label>
-                  <Input 
-                    type="email" 
-                    value={(formData.email as string) || ""} 
-                    onChange={(e) => updateData({ email: e.target.value })} 
-                    placeholder="email@example.com" 
-                  />
-                  {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-                </div>
+
                 <div>
                   <label className="text-sm font-medium">Education Level *</label>
                   <select 
