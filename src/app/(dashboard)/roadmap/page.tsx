@@ -19,11 +19,15 @@ export default async function RoadmapPage() {
       growthPercent: true,
       growthStage: true,
     }
+  }).catch((e) => {
+    console.error('Roadmap DB error:', e.message);
+    return null;
   });
 
-  if (!user) {
-    redirect("/auth/login");
-  }
+  // Use defaults if DB fails — don't block the page
+  const growthPercent = user?.growthPercent ?? 0;
+  const growthStage = user?.growthStage ?? 'SEED';
+
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
@@ -40,8 +44,8 @@ export default async function RoadmapPage() {
         </div>
         <div className="lg:col-span-1 h-48">
           <TreeProgressSync 
-            percent={user.growthPercent} 
-            stage={user.growthStage} 
+            percent={growthPercent} 
+            stage={growthStage} 
           />
         </div>
       </div>

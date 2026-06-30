@@ -13,25 +13,29 @@ export async function POST(request: Request) {
     }
 
     // Ensure the User record exists in our database
+    // Note: email is intentionally excluded to avoid unique constraint conflicts.
+    // Email is already managed by Supabase Auth.
     try {
+      const userName = user.user_metadata?.first_name
+        ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
+        : user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+
       await prisma.user.upsert({
         where: { id: user.id },
         update: {
-          email: user.email,
-          name: user.user_metadata?.first_name 
-            ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
-            : user.email?.split('@')[0] || 'User',
+          name: userName,
         },
         create: {
           id: user.id,
-          email: user.email,
-          name: user.user_metadata?.first_name 
-            ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
-            : user.email?.split('@')[0] || 'User',
+          name: userName,
         }
       });
-    } catch (dbError) {
-      console.error("Error upserting user:", dbError);
+    } catch (dbError: any) {
+      console.error("Error upserting user:", {
+        message: dbError?.message,
+        code: dbError?.code,
+        meta: dbError?.meta,
+      });
       return NextResponse.json({ error: 'Failed to initialize user profile' }, { status: 500 });
     }
 

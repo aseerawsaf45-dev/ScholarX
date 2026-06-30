@@ -1,35 +1,32 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
-// Helper to resolve user session reliably
+// Create DB client at runtime (inside functions), not at module level
+function getDb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
+
 async function getCurrentUser() {
+  const db = getDb();
   const reqHeaders = await headers();
   let userId = reqHeaders.get("x-user-id");
 
   if (!userId) {
-    // Dev fallback: find the first user in the database so it never fails
-    const firstUser = await prisma.user.findFirst();
-    userId = firstUser?.id || null;
+    const { data } = await db.from("User").select("id").limit(1).single();
+    userId = data?.id || null;
   }
 
   if (userId) {
-    // Ensure the User record actually exists in the database to prevent foreign key errors
-    const exists = await prisma.user.findUnique({ where: { id: userId } });
+    const { data: exists } = await db.from("User").select("id").eq("id", userId).single();
     if (!exists) {
-      try {
-        await prisma.user.create({
-          data: {
-            id: userId,
-            email: `${userId}@placeholder.com`,
-            name: "Community User",
-          }
-        });
-      } catch (err) {
-        console.error("Failed to create missing community user record:", err);
-      }
+      await db.from("User").insert({ id: userId, name: "Community User" });
     }
   }
 
@@ -38,19 +35,32 @@ async function getCurrentUser() {
 
 export async function getPosts(tagFilter?: string, sortBy: "newest" | "top" = "newest") {
   try {
-    const posts = await prisma.post.findMany({
-      where: tagFilter ? { tags: { has: tagFilter } } : {},
-      include: {
-        user: { select: { name: true } },
-        comments: {
-          include: {
-            user: { select: { name: true } }
-          }
-        }
-      },
-      orderBy: sortBy === "top" ? { upvotes: "desc" } : { createdAt: "desc" }
-    });
-    return posts;
+    const db = getDb();
+    let query = db
+      .from("Post")
+      .select(`
+        id, title, content, tags, upvotes, createdAt, userId,
+        user:User(name),
+        comments:Comment(
+          id, content, createdAt, userId,
+          user:User(name)
+        )
+      `);
+
+    if (tagFilter) query = query.contains("tags", [tagFilter]);
+
+    if (sortBy === "top") {
+      query = query.order("upvotes", { ascending: false });
+    } else {
+      query = query.order("createdAt", { ascending: false });
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("Failed to get community posts:", error.message);
+      return [];
+    }
+    return data || [];
   } catch (error) {
     console.error("Failed to get community posts:", error);
     return [];
@@ -59,17 +69,20 @@ export async function getPosts(tagFilter?: string, sortBy: "newest" | "top" = "n
 
 export async function createPost(title: string, content: string, tags: string[]) {
   try {
+    const db = getDb();
     const userId = await getCurrentUser();
     if (!userId) return { error: "User not authenticated" };
 
-    const post = await prisma.post.create({
-      data: {
-        userId,
-        title,
-        content,
-        tags,
-      }
-    });
+    const { data: post, error } = await db
+      .from("Post")
+      .insert({ id: crypto.randomUUID(), userId, title, content, tags, upvotes: 0, createdAt: new Date().toISOString() })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to create post:", error.message);
+      return { error: error.message || "Failed to create discussion post" };
+    }
 
     revalidatePath("/community");
     return { success: true, post };
@@ -81,14 +94,20 @@ export async function createPost(title: string, content: string, tags: string[])
 
 export async function upvotePost(postId: string) {
   try {
-    const post = await prisma.post.update({
-      where: { id: postId },
-      data: {
-        upvotes: { increment: 1 }
-      }
-    });
+    const db = getDb();
+    const { data: post } = await db.from("Post").select("upvotes").eq("id", postId).single();
+    const currentUpvotes = post?.upvotes ?? 0;
+
+    const { data: updated, error } = await db
+      .from("Post")
+      .update({ upvotes: currentUpvotes + 1 })
+      .eq("id", postId)
+      .select("upvotes")
+      .single();
+
+    if (error) return { error: error.message };
     revalidatePath("/community");
-    return { success: true, upvotes: post.upvotes };
+    return { success: true, upvotes: updated?.upvotes };
   } catch (error: any) {
     return { error: error.message };
   }
@@ -96,20 +115,17 @@ export async function upvotePost(postId: string) {
 
 export async function addComment(postId: string, content: string) {
   try {
+    const db = getDb();
     const userId = await getCurrentUser();
     if (!userId) return { error: "User not authenticated" };
 
-    const comment = await prisma.comment.create({
-      data: {
-        postId,
-        userId,
-        content,
-      },
-      include: {
-        user: { select: { name: true } }
-      }
-    });
+    const { data: comment, error } = await db
+      .from("Comment")
+      .insert({ id: crypto.randomUUID(), postId, userId, content, createdAt: new Date().toISOString() })
+      .select(`id, content, createdAt, userId, user:User(name)`)
+      .single();
 
+    if (error) return { error: error.message };
     revalidatePath("/community");
     return { success: true, comment };
   } catch (error: any) {
@@ -119,29 +135,20 @@ export async function addComment(postId: string, content: string) {
 
 export async function deletePost(postId: string) {
   try {
+    const db = getDb();
     const userId = await getCurrentUser();
     if (!userId) return { error: "User not authenticated" };
 
-    const post = await prisma.post.findUnique({
-      where: { id: postId }
-    });
-
+    const { data: post } = await db.from("Post").select("userId").eq("id", postId).single();
     if (!post) return { error: "Post not found" };
 
     if (post.userId !== userId) {
-      const firstUser = await prisma.user.findFirst();
-      if (firstUser?.id !== userId) {
-        return { error: "Not authorized to delete this post" };
-      }
+      const { data: firstUser } = await db.from("User").select("id").limit(1).single();
+      if (firstUser?.id !== userId) return { error: "Not authorized to delete this post" };
     }
 
-    await prisma.comment.deleteMany({
-      where: { postId }
-    });
-
-    await prisma.post.delete({
-      where: { id: postId }
-    });
+    await db.from("Comment").delete().eq("postId", postId);
+    await db.from("Post").delete().eq("id", postId);
 
     revalidatePath("/community");
     return { success: true };
@@ -152,26 +159,19 @@ export async function deletePost(postId: string) {
 
 export async function deleteComment(commentId: string) {
   try {
+    const db = getDb();
     const userId = await getCurrentUser();
     if (!userId) return { error: "User not authenticated" };
 
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId }
-    });
-
+    const { data: comment } = await db.from("Comment").select("userId").eq("id", commentId).single();
     if (!comment) return { error: "Comment not found" };
 
     if (comment.userId !== userId) {
-      const firstUser = await prisma.user.findFirst();
-      if (firstUser?.id !== userId) {
-        return { error: "Not authorized to delete this comment" };
-      }
+      const { data: firstUser } = await db.from("User").select("id").limit(1).single();
+      if (firstUser?.id !== userId) return { error: "Not authorized to delete this comment" };
     }
 
-    await prisma.comment.delete({
-      where: { id: commentId }
-    });
-
+    await db.from("Comment").delete().eq("id", commentId);
     revalidatePath("/community");
     return { success: true };
   } catch (error: any) {

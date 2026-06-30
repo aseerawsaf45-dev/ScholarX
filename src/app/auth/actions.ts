@@ -63,7 +63,6 @@ export async function signup(formData: FormData) {
           create: {
             id: authData.user.id,
             name: `${firstName} ${lastName}`,
-            email: email,
           }
         })
       } catch (e) {

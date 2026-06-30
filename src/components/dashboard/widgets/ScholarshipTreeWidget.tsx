@@ -101,24 +101,15 @@ function TreeStageVisual({ stage }: { stage: string }) {
 }
 
 export function ScholarshipTreeWidget() {
-  const { data, isLoading, isError } = useDashboardData();
-  const progress = data?.userProgress;
+  const { data, isLoading } = useDashboardData();
+  // Use default SEED stage if data fails or is missing — tree always shows
+  const progress = data?.userProgress ?? { growthStage: 'SEED', growthPercent: 0 };
 
   if (isLoading) {
     return (
       <Card className="h-full min-h-[400px]">
         <CardContent className="h-full flex items-center justify-center p-0">
           <Skeleton className="w-full h-full rounded-xl" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (isError || !progress) {
-    return (
-      <Card className="h-full min-h-[400px]">
-        <CardContent className="h-full flex items-center justify-center">
-          <p className="text-muted-foreground text-sm">Failed to load tree data.</p>
         </CardContent>
       </Card>
     );

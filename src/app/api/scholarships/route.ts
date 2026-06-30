@@ -1,154 +1,84 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { DegreeLevel, FundingType, Prisma } from "@prisma/client";
+import { createClient } from "@supabase/supabase-js";
+
+// Create client inside handler so env vars are available at runtime, not build time
+function getDb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
 
 export async function GET(request: Request) {
   try {
+    const db = getDb();
     const { searchParams } = new URL(request.url);
 
-    // Parsing parameters
     const search = searchParams.get("search") || "";
-    const country = searchParams.getAll("country"); // e.g., ?country=Germany&country=Canada
-    const degreeLevel = searchParams.getAll("degreeLevel") as DegreeLevel[];
-    const fundingType = searchParams.getAll("fundingType") as FundingType[];
-    const fieldsOfStudy = searchParams.getAll("fieldsOfStudy");
-    
-    const minGpa = searchParams.get("minGpa") ? parseFloat(searchParams.get("minGpa")!) : undefined;
-    const minIelts = searchParams.get("minIelts") ? parseFloat(searchParams.get("minIelts")!) : undefined;
-    const deadlineStr = searchParams.get("deadline"); // '7', '30', '90', 'all'
+    const countries = searchParams.getAll("country");
+    const degreeLevels = searchParams.getAll("degreeLevel");
+    const fundingTypes = searchParams.getAll("fundingType");
+    const deadlineStr = searchParams.get("deadline") || "all";
     const sort = searchParams.get("sort") || "best_match";
-    const cursor = searchParams.get("cursor");
+    const cursor = searchParams.get("cursor") || null;
     const limit = 20;
 
-    // Building the where conditions safely using AND to prevent OR collisions
-    const conditions: Prisma.ScholarshipWhereInput[] = [
-      { isActive: true }
-    ];
+    let query = db
+      .from("Scholarship")
+      .select("id, slug, title, university, country, degreeLevel, fundingType, deadline, requiredGPA, requiredIELTS, provider, amountCovered, description")
+      .eq("isActive", true);
 
     if (search.trim()) {
-      conditions.push({
-        OR: [
-          { title: { contains: search, mode: "insensitive" } },
-          { university: { contains: search, mode: "insensitive" } },
-          { provider: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
-        ]
-      });
+      query = query.or(
+        `title.ilike.%${search}%,university.ilike.%${search}%,provider.ilike.%${search}%,description.ilike.%${search}%`
+      );
     }
 
-    if (country.length > 0) {
-      conditions.push({ country: { in: country } });
-    }
-
-    if (degreeLevel.length > 0) {
-      conditions.push({ degreeLevel: { in: degreeLevel } });
-    }
-
-    if (fundingType.length > 0) {
-      conditions.push({ fundingType: { in: fundingType } });
-    }
-
-    // Skip filtering when gpa is the default minimum (2.0 or lower)
-    if (minGpa !== undefined && minGpa > 2.0) {
-      conditions.push({
-        OR: [
-          { requiredGPA: { lte: minGpa } },
-          { requiredGPA: null }
-        ]
-      });
-    }
-
-    // Skip filtering when IELTS is the default minimum (0)
-    if (minIelts !== undefined && minIelts > 0) {
-      conditions.push({
-        OR: [
-          { requiredIELTS: { lte: minIelts } },
-          { requiredIELTS: null }
-        ]
-      });
-    }
-
-    if (fieldsOfStudy.length > 0) {
-      conditions.push({
-        OR: fieldsOfStudy.map(field => ({
-          fieldsOfStudy: {
-            array_contains: field
-          }
-        }))
-      });
-    }
+    if (countries.length > 0) query = query.in("country", countries);
+    if (degreeLevels.length > 0) query = query.in("degreeLevel", degreeLevels);
+    if (fundingTypes.length > 0) query = query.in("fundingType", fundingTypes);
 
     if (deadlineStr && deadlineStr !== "all") {
       const days = parseInt(deadlineStr);
       if (!isNaN(days)) {
-        const date = new Date();
-        date.setDate(date.getDate() + days);
-        conditions.push({
-          deadline: { lte: date, gte: new Date() }
-        });
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + days);
+        query = query
+          .gte("deadline", new Date().toISOString())
+          .lte("deadline", futureDate.toISOString());
       }
     }
 
-    const where: Prisma.ScholarshipWhereInput = {
-      AND: conditions
-    };
+    if (cursor) query = query.gt("id", cursor);
 
-    // Building the orderBy clause
-    let orderBy: Prisma.ScholarshipOrderByWithRelationInput | Prisma.ScholarshipOrderByWithRelationInput[] = {};
-    
     switch (sort) {
-      case "newest":
-        orderBy = { createdAt: "desc" };
-        break;
-      case "deadline":
-        orderBy = { deadline: "asc" };
-        break;
-      case "most_saved":
-        orderBy = { saveCount: "desc" };
-        break;
-      case "most_viewed":
-        orderBy = { viewCount: "desc" };
-        break;
-      case "best_match":
-      default:
-        // By default, just sort by recently updated or id, real "best_match" requires complex scoring
-        orderBy = { updatedAt: "desc" };
-        break;
+      case "newest": query = query.order("createdAt", { ascending: false }); break;
+      case "deadline": query = query.order("deadline", { ascending: true }); break;
+      case "most_saved": query = query.order("saveCount", { ascending: false }); break;
+      case "most_viewed": query = query.order("viewCount", { ascending: false }); break;
+      default: query = query.order("updatedAt", { ascending: false });
     }
 
-    // Execute query
-    const scholarships = await prisma.scholarship.findMany({
-      where,
-      orderBy,
-      take: limit + 1, // Fetch one extra to determine if there's a next page
-      cursor: cursor ? { id: cursor } : undefined,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        university: true,
-        country: true,
-        degreeLevel: true,
-        fundingType: true,
-        deadline: true,
-        requiredGPA: true,
-        requiredIELTS: true,
-        // Include partial details for the card
-      }
-    });
+    query = query.limit(limit + 1);
 
-    let nextCursor: typeof cursor | null = null;
-    if (scholarships.length > limit) {
-      const nextItem = scholarships.pop(); // Remove the extra item
-      nextCursor = nextItem!.id;
+    const { data: scholarships, error } = await query;
+
+    if (error) {
+      console.error("Scholarships query error:", error.message);
+      return NextResponse.json({ error: "Failed to fetch scholarships" }, { status: 500 });
     }
 
-    return NextResponse.json({
-      scholarships,
-      nextCursor,
-    });
-  } catch (error) {
-    console.error("Search API Error:", error);
+    let nextCursor: string | null = null;
+    const results = scholarships || [];
+    if (results.length > limit) {
+      const nextItem = results.pop();
+      nextCursor = nextItem?.id ?? null;
+    }
+
+    return NextResponse.json({ scholarships: results, nextCursor });
+  } catch (error: any) {
+    console.error("Scholarships API Error:", error);
     return NextResponse.json({ error: "Failed to fetch scholarships" }, { status: 500 });
   }
 }

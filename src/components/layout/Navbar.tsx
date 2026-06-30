@@ -58,19 +58,20 @@ export function Navbar() {
               <Button variant="ghost" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  signOut();
-                }}
+              <Button
+                variant="outline"
+                onClick={() => { signOut(); }}
               >
-                Clear Profile
+                Sign Out
               </Button>
             </>
           ) : (
             <>
+              <Button variant="ghost" asChild>
+                <Link href="/auth/login">Sign In</Link>
+              </Button>
               <Button variant="premium" asChild>
-                <Link href="/onboarding">Create Profile</Link>
+                <Link href="/auth/signup">Get Started</Link>
               </Button>
             </>
           )}
@@ -104,20 +105,21 @@ export function Navbar() {
                   <Button variant="outline" className="w-full" asChild>
                     <Link href="/dashboard">Dashboard</Link>
                   </Button>
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="outline"
                     className="w-full"
-                    onClick={() => {
-                      signOut();
-                    }}
+                    onClick={() => { signOut(); }}
                   >
-                    Clear Profile
+                    Sign Out
                   </Button>
                 </>
               ) : (
                 <>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/auth/login">Sign In</Link>
+                  </Button>
                   <Button variant="premium" className="w-full" asChild>
-                    <Link href="/onboarding">Create Profile</Link>
+                    <Link href="/auth/signup">Get Started</Link>
                   </Button>
                 </>
               )}

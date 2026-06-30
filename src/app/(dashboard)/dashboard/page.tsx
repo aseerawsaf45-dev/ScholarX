@@ -46,25 +46,28 @@ export default async function DashboardPage() {
       return null
     })
 
-    // If user doesn't exist in database, redirect to onboarding
-    if (!dbUser) {
-      redirect('/onboarding')
-    }
-
-    // If profile is not complete, redirect to onboarding
-    if (!dbUser.profile) {
-      redirect('/onboarding')
-    }
+    // Only redirect to onboarding if user truly doesn't exist in DB AND has no profile
+    // Do NOT redirect on DB connection errors (dbUser === null due to catch)
+    // The demo user and existing users should always reach the dashboard
+    const userName = dbUser?.name || resolvedUserId?.split('-')[0] || 'Scholar'
+    const needsOnboarding = dbUser !== null && !dbUser.profile
 
     return (
       <div className="space-y-8 animate-in fade-in duration-500 pb-8">
         <div>
           <h1 className="text-3xl font-heading font-bold tracking-tight">
-            Welcome back, {dbUser.name?.split(' ')[0] || 'Scholar'}!
+            Welcome back, {userName.split(' ')[0]}!
           </h1>
           <p className="text-muted-foreground mt-2">
-            Your dashboard is ready. Keep growing your scholarship tree!
+            {needsOnboarding
+              ? 'Complete your profile to get personalised scholarship recommendations!'
+              : 'Your dashboard is ready. Keep growing your scholarship tree!'}
           </p>
+          {needsOnboarding && (
+            <a href="/onboarding" className="inline-block mt-3 text-sm text-primary underline underline-offset-4">
+              Complete your profile →
+            </a>
+          )}
         </div>
 
         <DashboardGrid>
@@ -101,6 +104,14 @@ export default async function DashboardPage() {
     )
   } catch (error) {
     console.error('Dashboard page error:', error)
-    redirect('/onboarding')
+    // Don't redirect to onboarding on errors — show a minimal dashboard
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500 pb-8">
+        <div>
+          <h1 className="text-3xl font-heading font-bold tracking-tight">Welcome back!</h1>
+          <p className="text-muted-foreground mt-2">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
   }
 }

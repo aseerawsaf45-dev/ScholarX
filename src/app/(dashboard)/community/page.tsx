@@ -43,6 +43,7 @@ export default function CommunityPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
 
   const fetchCommunityData = async () => {
     const data = await getPosts(selectedTag || undefined, sortBy);
@@ -58,6 +59,7 @@ export default function CommunityPage() {
     if (!newTitle.trim() || !newContent.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
+    setPostError(null);
     const tagsArray = newTags
       .split(",")
       .map(t => t.trim())
@@ -71,6 +73,8 @@ export default function CommunityPage() {
       setNewTags("");
       setShowCreateForm(false);
       fetchCommunityData();
+    } else {
+      setPostError(res.error || "Failed to post. Please try again.");
     }
     setIsSubmitting(false);
   };
@@ -216,13 +220,25 @@ export default function CommunityPage() {
                       className="bg-background"
                     />
                   </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button type="button" variant="ghost" onClick={() => setShowCreateForm(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" variant="premium" disabled={isSubmitting}>
-                      Post Thread
-                    </Button>
+                  <div className="flex flex-col gap-2">
+                    {postError && (
+                      <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
+                        ⚠️ {postError}
+                      </p>
+                    )}
+                    <div className="flex gap-2 justify-end">
+                      <Button type="button" variant="ghost" onClick={() => { setShowCreateForm(false); setPostError(null); }}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" variant="premium" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <span className="flex items-center gap-2">
+                            <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            Posting...
+                          </span>
+                        ) : 'Post Thread'}
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </CardContent>
