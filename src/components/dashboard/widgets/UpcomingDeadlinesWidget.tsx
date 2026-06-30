@@ -1,6 +1,6 @@
 "use client";
 
-import { useUpcomingDeadlines } from "@/hooks/useDashboardData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,7 +8,8 @@ import { formatDistanceToNow, differenceInDays } from "date-fns";
 import Link from "next/link";
 
 export function UpcomingDeadlinesWidget() {
-  const { data: deadlines = [], isLoading, isError } = useUpcomingDeadlines();
+  const { data, isLoading, isError } = useDashboardData();
+  const deadlines = data?.upcomingDeadlines || [];
 
   if (isLoading) {
     return <Skeleton className="w-full h-64 rounded-xl" />;

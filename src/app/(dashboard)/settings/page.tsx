@@ -4,8 +4,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { signOut } from "@/app/auth/actions";
 import { Icon } from "@/components/ui/icon";
+
+import { signOut } from "@/app/auth/actions";
 
 export default function SettingsPage() {
   const isLoading = false;
@@ -66,11 +67,15 @@ export default function SettingsPage() {
               <h4 className="font-semibold text-sm">Sign Out</h4>
               <p className="text-xs text-muted-foreground">Sign out of your account on this device.</p>
             </div>
-            <form action={signOut}>
-              <Button type="submit" variant="outline" className="gap-2">
-                <Icon name="LogOut" size={16} /> Sign Out
-              </Button>
-            </form>
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => {
+                signOut();
+              }}
+            >
+              <Icon name="LogOut" size={16} /> Sign Out
+            </Button>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between border border-destructive/20 bg-destructive/5 p-4 rounded-lg mt-4">

@@ -1,13 +1,15 @@
 "use client";
 
-import { useRoadmapTasks } from "@/hooks/useDashboardData";
+import { useDashboardData, useToggleTask } from "@/hooks/useDashboardData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export function RoadmapWidget() {
-  const { data: tasks = [], isLoading, isError, toggleTask } = useRoadmapTasks();
+  const { data, isLoading, isError } = useDashboardData();
+  const tasks = data?.roadmapTasks || [];
+  const { mutate: toggleTask } = useToggleTask();
 
   if (isLoading) {
     return <Skeleton className="w-full h-64 rounded-xl" />;

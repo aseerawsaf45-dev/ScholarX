@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { DashboardGrid, Widget } from '@/components/dashboard/DashboardGrid'
 import { ScholarshipTreeWidget } from '@/components/dashboard/widgets/ScholarshipTreeWidget'
 import { ProfileCompletionWidget } from '@/components/dashboard/widgets/ProfileCompletionWidget'
@@ -11,15 +12,26 @@ import { RoadmapWidget } from '@/components/dashboard/widgets/RoadmapWidget'
 import { RecentActivityWidget } from '@/components/dashboard/widgets/RecentActivityWidget'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const headerList = await headers()
+  const userId = headerList.get('x-user-id')
 
-  if (!user) {
-    redirect('/auth/login')
+  let resolvedUserId = userId
+  if (!resolvedUserId) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      redirect('/auth/login')
+    }
+    resolvedUserId = user?.id
+  }
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!resolvedUserId || !uuidRegex.test(resolvedUserId)) {
+    redirect('/onboarding')
   }
 
   const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
+    where: { id: resolvedUserId },
     include: {
       profile: true,
     }

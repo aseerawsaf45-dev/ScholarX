@@ -27,18 +27,39 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const protectedRoutes = ['/dashboard', '/scholarships', '/roadmap', '/community', '/settings']
   const isProtectedRoute = protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
+    url.pathname = '/onboarding'
     return NextResponse.redirect(url)
   }
 
-  return supabaseResponse
+  const requestHeaders = new Headers(request.headers)
+  if (user) {
+    requestHeaders.set('x-user-id', user.id)
+  }
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+
+  // Copy cookies set during session refresh
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie.name, cookie.value, {
+      path: cookie.path,
+      domain: cookie.domain,
+      maxAge: cookie.maxAge,
+      secure: cookie.secure,
+      httpOnly: cookie.httpOnly,
+      sameSite: cookie.sameSite,
+    })
+  })
+
+  return response
 }

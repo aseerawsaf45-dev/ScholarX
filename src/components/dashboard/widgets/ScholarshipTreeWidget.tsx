@@ -1,6 +1,5 @@
 "use client";
-
-import { useUserProgress } from "@/hooks/useDashboardData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -102,7 +101,8 @@ function TreeStageVisual({ stage }: { stage: string }) {
 }
 
 export function ScholarshipTreeWidget() {
-  const { data: progress, isLoading, isError } = useUserProgress();
+  const { data, isLoading, isError } = useDashboardData();
+  const progress = data?.userProgress;
 
   if (isLoading) {
     return (

@@ -1,4 +1,3 @@
-const pdfParse = require('pdf-parse');
 import mammoth from 'mammoth';
 import Tesseract from 'tesseract.js';
 
@@ -32,6 +31,7 @@ export async function parseDocumentFromUrl(url: string, fileType: string): Promi
     let pageCount = undefined;
 
     if (type.includes('pdf')) {
+      const pdfParse = require('pdf-parse');
       const data = await pdfParse(buffer);
       rawText = data.text;
       pageCount = data.numpages;

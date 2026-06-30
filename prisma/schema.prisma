@@ -52,6 +52,8 @@ model User {
   matches            ScholarshipMatch[]
   userDeadlines      UserDeadline[]
   deadlineReminders  DeadlineReminder[]
+  posts              Post[]
+  comments           Comment[]
 }
 
 model StudentProfile {
@@ -379,4 +381,26 @@ model DeadlineReminder {
   remindAt   DateTime
   channel    String   @default("EMAIL") // "EMAIL" | "IN_APP" | "WHATSAPP"
   sent       Boolean  @default(false)
+}
+
+model Post {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String    @db.Text
+  tags      String[]  // List of tags
+  upvotes   Int       @default(0)
+  createdAt DateTime  @default(now())
+  comments  Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  createdAt DateTime @default(now())
 }

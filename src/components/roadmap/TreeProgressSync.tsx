@@ -23,8 +23,8 @@ export function TreeProgressSync({ percent, stage }: { percent: number; stage: s
   const visual = getStageVisual();
 
   return (
-    <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 relative overflow-hidden h-full flex flex-col justify-center">
-      <div className="absolute top-0 right-0 p-32 bg-primary-500/5 rounded-full blur-3xl" />
+    <div className="bg-card backdrop-blur-xl border border-border rounded-2xl p-6 relative overflow-hidden h-full flex flex-col justify-center">
+      <div className="absolute top-0 right-0 p-32 bg-primary/5 rounded-full blur-3xl" />
       
       <div className="flex items-center gap-4 mb-6 relative z-10">
         <div className={`w-16 h-16 rounded-2xl ${visual.bg} flex items-center justify-center`}>
@@ -42,7 +42,7 @@ export function TreeProgressSync({ percent, stage }: { percent: number; stage: s
         </div>
         
         <div className="flex-1">
-          <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-1">Growth Stage</h3>
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Growth Stage</h3>
           <AnimatePresence mode="wait">
             <motion.div
               key={stage}
@@ -56,19 +56,19 @@ export function TreeProgressSync({ percent, stage }: { percent: number; stage: s
         </div>
         
         <div className="text-right">
-          <span className="text-3xl font-bold text-slate-100">{percent}</span>
-          <span className="text-slate-500 text-sm">/100 XP</span>
+          <span className="text-3xl font-bold text-foreground">{percent}</span>
+          <span className="text-muted-foreground text-sm">/100 XP</span>
         </div>
       </div>
 
       <div className="relative z-10">
-        <div className="flex justify-between text-xs text-slate-500 mb-2 font-medium">
+        <div className="flex justify-between text-xs text-muted-foreground mb-2 font-medium">
           <span>Seed</span>
           <span>Forest</span>
         </div>
-        <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden">
+        <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
           <motion.div 
-            className="h-full bg-gradient-to-r from-emerald-500 to-primary-500 rounded-full relative"
+            className="h-full bg-gradient-to-r from-emerald-500 to-primary rounded-full relative"
             initial={{ width: 0 }}
             animate={{ width: `${percent}%` }}
             transition={{ duration: 1.5, ease: "easeOut" }}
@@ -76,14 +76,6 @@ export function TreeProgressSync({ percent, stage }: { percent: number; stage: s
             <div className="absolute top-0 left-0 right-0 bottom-0 bg-white/20 w-full h-full animate-pulse" />
           </motion.div>
         </div>
-      </div>
-
-      {/* Decorative Tree integration note */}
-      <div className="mt-6 p-4 rounded-xl border border-slate-800 bg-slate-900/80 text-sm text-slate-400 flex gap-3 items-start">
-        <Icon name="info" className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-        <p>
-          In a production environment, this component will sync via Zustand to your globally mounted <strong className="text-slate-300">Spline 3D Tree Model</strong>, triggering camera zooms, leaf color evolution, and particle blooms as you complete roadmap tasks.
-        </p>
       </div>
     </div>
   );

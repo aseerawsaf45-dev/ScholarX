@@ -105,7 +105,7 @@ export function DashboardSidebar() {
 
             if (sidebarCollapsed) {
               return (
-                <Tooltip key={item.name} delay={0}>
+                <Tooltip key={item.name}>
                   <TooltipTrigger asChild>
                     {linkContent}
                   </TooltipTrigger>

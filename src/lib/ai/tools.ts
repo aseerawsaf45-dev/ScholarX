@@ -13,14 +13,14 @@ export const searchScholarshipsTool = tool({
     degree: z.string().optional().describe('Target degree level filter (e.g., UNDERGRADUATE, MASTERS, PHD).'),
     topK: z.number().optional().describe('Number of results to return.'),
   }),
-  execute: async ({ query, country, degree, topK }) => {
+  execute: async ({ query, country, degree, topK }: any) => {
     return similaritySearch({
       query,
       filters: { country, degree },
       topK,
     });
   },
-});
+} as any);
 
 export const calculateEligibilityTool = tool({
   description: 'Calculate the eligibility score for a specific scholarship based on the user profile.',
@@ -28,7 +28,7 @@ export const calculateEligibilityTool = tool({
     userId: z.string().describe('The ID of the user.'),
     scholarshipId: z.string().describe('The ID of the scholarship.'),
   }),
-  execute: async ({ userId, scholarshipId }) => {
+  execute: async ({ userId, scholarshipId }: any) => {
     const userProfile = await prisma.studentProfile.findUnique({ where: { userId } });
     if (!userProfile) throw new Error("User not found");
 
@@ -52,7 +52,7 @@ export const calculateEligibilityTool = tool({
 
     return calculateEligibilityScore(userData, scholarship);
   },
-});
+} as any);
 
 export const analyzeDocumentTool = tool({
   description: 'Analyze a user document (SOP, CV) with AI to get a score and suggestions.',
@@ -60,17 +60,17 @@ export const analyzeDocumentTool = tool({
     documentText: z.string().describe('The extracted text of the document.'),
     documentType: z.string().describe('The type of document (e.g., SOP, CV).'),
   }),
-  execute: async ({ documentText, documentType }) => {
+  execute: async ({ documentText, documentType }: any) => {
     return evaluateDocument(documentText, documentType);
   },
-});
+} as any);
 
 export const fetchUserProfileTool = tool({
   description: 'Fetch the full profile of a user.',
   parameters: z.object({
     userId: z.string().describe('The ID of the user.'),
   }),
-  execute: async ({ userId }) => {
+  execute: async ({ userId }: any) => {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -84,4 +84,4 @@ export const fetchUserProfileTool = tool({
     });
     return user;
   },
-});
+} as any);

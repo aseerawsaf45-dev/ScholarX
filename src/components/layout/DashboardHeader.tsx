@@ -3,6 +3,7 @@
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/store/uiStore";
+import { useAuthStore } from "@/store/authStore";
 import { NotificationDropdown } from "@/components/shared/NotificationDropdown";
 import { useTheme } from "next-themes";
 import {
@@ -13,17 +14,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createClient } from "@/utils/supabase/client";
+
+import { signOut } from "@/app/auth/actions";
 
 export function DashboardHeader() {
   const { toggleSearchPalette } = useUIStore();
   const { theme, setTheme } = useTheme();
+  const user = useAuthStore((state) => state.user);
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/auth/login";
+    await signOut();
   };
+
+  const userInitial = user?.user_metadata?.first_name?.[0] || user?.email?.[0] || "S";
+  const userName = user?.user_metadata ? `${user.user_metadata.first_name || ""} ${user.user_metadata.last_name || ""}`.trim() : "Scholar";
+  const userEmail = user?.email || "scholar@scholarx.dev";
 
   return (
     <header className="hidden lg:flex h-16 border-b border-border items-center justify-between px-8 sticky top-0 bg-background/80 backdrop-blur z-30">
@@ -57,16 +62,16 @@ export function DashboardHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full ml-2">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
-                JD
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm uppercase">
+                {userInitial}
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuContent className="w-56" align="end">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">John Doe</p>
-                <p className="text-xs leading-none text-muted-foreground">john@example.com</p>
+                <p className="text-sm font-medium leading-none">{userName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -81,7 +86,7 @@ export function DashboardHeader() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <Icon name="LogOut" className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <span>Reset Profile</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

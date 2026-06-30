@@ -40,12 +40,12 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
       whileHover={{ y: -2 }}
       className={`relative p-4 rounded-xl border backdrop-blur-xl transition-all shadow-sm ${
         isCompleted 
-          ? "bg-slate-900/40 border-slate-800 opacity-60" 
-          : "bg-slate-900/80 border-slate-700 hover:border-slate-600 hover:shadow-md"
+          ? "bg-card/40 border-border opacity-60" 
+          : "bg-card/85 border-border/85 hover:border-primary/30 hover:shadow-md"
       }`}
     >
       <div className="flex justify-between items-start mb-3 gap-2">
-        <h3 className={`font-semibold text-[15px] leading-tight ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-200'}`}>
+        <h3 className={`font-semibold text-[15px] leading-tight ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
           {task.title}
         </h3>
         {!isCompleted && (
@@ -59,12 +59,12 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${getCategoryColor()}`}>
           {task.category.replace('_', ' ')}
         </span>
-        <span className="text-xs text-slate-500 flex items-center gap-1">
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
           <Icon name="clock" className="w-3 h-3" />
           ~{task.estimatedTimeDays} days
         </span>
         {task.linkedScholarships.length > 0 && (
-          <span className="text-xs text-primary-400 flex items-center gap-1 bg-primary-500/10 px-2 py-0.5 rounded-md">
+          <span className="text-xs text-primary flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-md">
             <Icon name="link" className="w-3 h-3" />
             {task.linkedScholarships.length} linked
           </span>
@@ -75,23 +75,23 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
         <motion.div 
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="mb-4 text-sm text-slate-400"
+          className="mb-4 text-sm text-muted-foreground"
         >
           <p>{task.description}</p>
           
           {task.aiSuggestion && (
-            <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg flex gap-2 items-start">
+            <div className="mt-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-lg flex gap-2 items-start">
               <Icon name="sparkles" className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-purple-200 leading-relaxed italic">{task.aiSuggestion}</p>
+              <p className="text-xs text-purple-300 leading-relaxed italic">{task.aiSuggestion}</p>
             </div>
           )}
         </motion.div>
       )}
 
-      <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-800">
+      <div className="flex items-center justify-between mt-2 pt-3 border-t border-border/60">
         <button 
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
         >
           {expanded ? "Show Less" : "Details"}
           <Icon name={expanded ? "chevron-up" : "chevron-down"} className="w-3 h-3" />
@@ -100,7 +100,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
         {!isCompleted && (
           <button
             onClick={() => onComplete(task.id)}
-            className="text-xs font-medium bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-md transition-colors shadow-sm shadow-primary-500/20 flex items-center gap-1.5"
+            className="text-xs font-medium bg-primary hover:bg-primary/95 text-primary-foreground px-3 py-1.5 rounded-md transition-colors shadow-sm shadow-primary/20 flex items-center gap-1.5"
           >
             <Icon name="check" className="w-3 h-3" />
             Complete
