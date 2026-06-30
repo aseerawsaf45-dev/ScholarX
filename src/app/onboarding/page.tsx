@@ -8,22 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { useOnboardingStore } from "@/store/onboardingStore";
-import { useAuthStore } from "@/store/authStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as z from "zod";
-import { createClient } from "@/utils/supabase/client";
 
 const step1Schema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
-  educationLevel: z.string().min(1, "Required"),
+  educationLevel: z.string().min(1, "Education level is required"),
   hscGpa: z.string().optional(),
   institutionName: z.string().optional(),
 });
 
 const step2Schema = z.object({
   country: z.string().optional(),
+  district: z.string().optional(),
   city: z.string().optional(),
   familyIncome: z.string().optional(),
 });
@@ -42,11 +41,17 @@ export default function OnboardingPage() {
   const queryClient = useQueryClient();
   const { data: formData, updateData } = useOnboardingStore();
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
       try {
         const res = await fetch("/api/profile");
+        if (res.status === 401) {
+          setAuthError("You need to log in first");
+          router.push("/auth/login");
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           if (data?.profile) {
@@ -58,6 +63,7 @@ export default function OnboardingPage() {
               institutionName: p.profile?.institutionName || "",
               hscGpa: p.profile?.hscGpa?.toString() || "",
               country: p.profile?.country || "Bangladesh",
+              district: p.profile?.district || "",
               city: p.profile?.city || "",
               familyIncome: p.profile?.familyIncome || "",
               ielts: p.testScores?.ielts?.toString() || "",
@@ -72,56 +78,54 @@ export default function OnboardingPage() {
             };
             updateData(existingData);
           }
+        } else if (res.status === 404) {
+          // Profile doesn't exist yet, which is fine for first-time users
+          console.log("Profile not found - new user");
         }
       } catch (e) {
         console.error("Failed to load profile:", e);
       }
     }
     loadProfile();
-  }, [updateData]);
+  }, [updateData, router]);
 
   const mutation = useMutation({
     mutationFn: async (stepData: { step: number; data: any }) => {
-      const supabase = createClient();
-      
-      // Update name/metadata in Supabase if on step 1
-      if (stepData.step === 1 && stepData.data.name) {
-        await supabase.auth.updateUser({
-          data: {
-            first_name: stepData.data.name.split(' ')[0],
-            last_name: stepData.data.name.split(' ').slice(1).join(' '),
-          }
-        });
-      }
-
       const res = await fetch("/api/onboarding", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           step: stepData.step,
           data: stepData.data
         }),
       });
-      if (!res.ok) throw new Error("Failed to save");
+      
+      if (res.status === 401) {
+        setAuthError("Your session has expired. Please log in again.");
+        router.push("/auth/login");
+        throw new Error("Not authenticated");
+      }
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to save (status: ${res.status})`);
+      }
+      
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Progress saved");
     },
-    onError: () => {
-      toast.error("Failed to save progress");
+    onError: (error: Error) => {
+      console.error("Mutation error:", error);
+      if (!error.message.includes("Not authenticated")) {
+        toast.error(`Failed to save: ${error.message}`);
+      }
     }
   });
-
-  // Debounced save
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (Object.keys(formData).length > 0) {
-        mutation.mutate({ step, data: formData });
-      }
-    }, 2000);
-    return () => clearTimeout(handler);
-  }, [formData, step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleNext = async () => {
     // Validate current step
@@ -142,16 +146,50 @@ export default function OnboardingPage() {
       }
     }
 
-    // Force save on next
-    mutation.mutate({ step, data: formData });
-
-    if (step < 6) {
-      setStep(s => s + 1);
-    } else {
-      toast.success("Onboarding complete!");
-      router.push('/dashboard');
-    }
+    // Save before moving to next step
+    return new Promise<void>((resolve) => {
+      mutation.mutate(
+        { step, data: formData },
+        {
+          onSuccess: () => {
+            if (step < 6) {
+              setStep(s => s + 1);
+            } else {
+              toast.success("Onboarding complete!");
+              router.push('/dashboard');
+            }
+            resolve();
+          },
+          onError: () => {
+            // Error is already shown in onError handler
+            resolve();
+          }
+        }
+      );
+    });
   };
+
+  // Auto-save on formData changes with debounce
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (Object.keys(formData).length > 0 && step > 0) {
+        mutation.mutate({ step, data: formData });
+      }
+    }, 2000);
+    return () => clearTimeout(handler);
+  }, [formData, step]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (authError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+        <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8 shadow-soft text-center">
+          <h2 className="text-2xl font-bold mb-4 text-destructive">Authentication Error</h2>
+          <p className="text-muted-foreground mb-6">{authError}</p>
+          <Button onClick={() => router.push("/auth/login")}>Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
@@ -166,6 +204,14 @@ export default function OnboardingPage() {
           />
         </div>
 
+        {/* Saving indicator */}
+        {mutation.isPending && (
+          <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            Saving...
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" variants={fadeUp} initial="hidden" animate="visible" exit="hidden">
@@ -173,16 +219,25 @@ export default function OnboardingPage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium">Your Name</label>
-                  <Input value={(formData.name as string) || ""} onChange={(e) => updateData({ name: e.target.value })} placeholder="Full Name" />
+                  <Input 
+                    value={(formData.name as string) || ""} 
+                    onChange={(e) => updateData({ name: e.target.value })} 
+                    placeholder="Full Name" 
+                  />
                   {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                 </div>
                 <div>
                   <label className="text-sm font-medium">Email Address</label>
-                  <Input type="email" value={(formData.email as string) || ""} onChange={(e) => updateData({ email: e.target.value })} placeholder="email@example.com" />
+                  <Input 
+                    type="email" 
+                    value={(formData.email as string) || ""} 
+                    onChange={(e) => updateData({ email: e.target.value })} 
+                    placeholder="email@example.com" 
+                  />
                   {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Education Level</label>
+                  <label className="text-sm font-medium">Education Level *</label>
                   <select 
                     className="w-full h-11 px-3 mt-1 rounded-md border border-input bg-background"
                     value={(formData.educationLevel as string) || ""}
@@ -197,11 +252,21 @@ export default function OnboardingPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Institution Name</label>
-                  <Input value={(formData.institutionName as string) || ""} onChange={(e) => updateData({ institutionName: e.target.value })} />
+                  <Input 
+                    value={(formData.institutionName as string) || ""} 
+                    onChange={(e) => updateData({ institutionName: e.target.value })} 
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">GPA</label>
-                  <Input type="number" step="0.01" value={(formData.hscGpa as string) || ""} onChange={(e) => updateData({ hscGpa: e.target.value })} />
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    min="0"
+                    max="4"
+                    value={(formData.hscGpa as string) || ""} 
+                    onChange={(e) => updateData({ hscGpa: e.target.value })} 
+                  />
                 </div>
               </div>
             </motion.div>
@@ -213,11 +278,25 @@ export default function OnboardingPage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium">Country</label>
-                  <Input value={(formData.country as string) || "Bangladesh"} onChange={(e) => updateData({ country: e.target.value })} />
+                  <Input 
+                    value={(formData.country as string) || "Bangladesh"} 
+                    onChange={(e) => updateData({ country: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">District</label>
+                  <Input 
+                    value={(formData.district as string) || ""} 
+                    onChange={(e) => updateData({ district: e.target.value })} 
+                    placeholder="e.g., Dhaka, Chittagong" 
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">City</label>
-                  <Input value={(formData.city as string) || ""} onChange={(e) => updateData({ city: e.target.value })} />
+                  <Input 
+                    value={(formData.city as string) || ""} 
+                    onChange={(e) => updateData({ city: e.target.value })} 
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">Financial Background</label>
@@ -245,23 +324,54 @@ export default function OnboardingPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">IELTS</label>
-                  <Input type="number" step="0.5" value={(formData.ielts as string) || ""} onChange={(e) => updateData({ ielts: e.target.value })} />
+                  <Input 
+                    type="number" 
+                    step="0.5" 
+                    min="0"
+                    max="9"
+                    value={(formData.ielts as string) || ""} 
+                    onChange={(e) => updateData({ ielts: e.target.value })} 
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">TOEFL</label>
-                  <Input type="number" value={(formData.toefl as string) || ""} onChange={(e) => updateData({ toefl: e.target.value })} />
+                  <Input 
+                    type="number" 
+                    min="0"
+                    max="120"
+                    value={(formData.toefl as string) || ""} 
+                    onChange={(e) => updateData({ toefl: e.target.value })} 
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">Duolingo</label>
-                  <Input type="number" value={(formData.duolingo as string) || ""} onChange={(e) => updateData({ duolingo: e.target.value })} />
+                  <Input 
+                    type="number" 
+                    min="0"
+                    max="160"
+                    value={(formData.duolingo as string) || ""} 
+                    onChange={(e) => updateData({ duolingo: e.target.value })} 
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">SAT (Optional)</label>
-                  <Input type="number" value={(formData.sat as string) || ""} onChange={(e) => updateData({ sat: e.target.value })} />
+                  <Input 
+                    type="number" 
+                    min="400"
+                    max="1600"
+                    value={(formData.sat as string) || ""} 
+                    onChange={(e) => updateData({ sat: e.target.value })} 
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">GRE (Optional)</label>
-                  <Input type="number" value={(formData.gre as string) || ""} onChange={(e) => updateData({ gre: e.target.value })} />
+                  <Input 
+                    type="number" 
+                    min="260"
+                    max="340"
+                    value={(formData.gre as string) || ""} 
+                    onChange={(e) => updateData({ gre: e.target.value })} 
+                  />
                 </div>
               </div>
             </motion.div>
@@ -271,7 +381,11 @@ export default function OnboardingPage() {
             <motion.div key="step4" variants={fadeUp} initial="hidden" animate="visible" exit="hidden">
               <h2 className="text-2xl font-bold mb-6">Step 4: Academic Interests</h2>
               <p className="text-muted-foreground mb-4">Comma separated fields (e.g., Computer Science, Medicine).</p>
-              <Input value={(formData.interests as string[])?.join(", ") || ""} onChange={(e) => updateData({ interests: e.target.value.split(',').map((s: string) => s.trim()) })} />
+              <Input 
+                value={(formData.interests as string[])?.join(", ") || ""} 
+                onChange={(e) => updateData({ interests: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) })} 
+                placeholder="Enter your interests"
+              />
             </motion.div>
           )}
 
@@ -279,7 +393,11 @@ export default function OnboardingPage() {
             <motion.div key="step5" variants={fadeUp} initial="hidden" animate="visible" exit="hidden">
               <h2 className="text-2xl font-bold mb-6">Step 5: Country Preferences</h2>
               <p className="text-muted-foreground mb-4">Where do you want to study? (Comma separated)</p>
-              <Input value={(formData.countries as string[])?.join(", ") || ""} onChange={(e) => updateData({ countries: e.target.value.split(',').map((s: string) => s.trim()) })} />
+              <Input 
+                value={(formData.countries as string[])?.join(", ") || ""} 
+                onChange={(e) => updateData({ countries: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) })} 
+                placeholder="Enter preferred countries"
+              />
             </motion.div>
           )}
 
@@ -288,12 +406,20 @@ export default function OnboardingPage() {
               <h2 className="text-2xl font-bold mb-6">Step 6: Career Goals</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Short Term Goal</label>
-                  <Input value={(formData.desiredDegree as string) || ""} onChange={(e) => updateData({ desiredDegree: e.target.value })} />
+                  <label className="text-sm font-medium">Desired Degree Level</label>
+                  <Input 
+                    value={(formData.desiredDegree as string) || ""} 
+                    onChange={(e) => updateData({ desiredDegree: e.target.value })} 
+                    placeholder="e.g., Bachelor's, Master's, PhD"
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">Long Term Goal</label>
-                  <Input value={(formData.longTermGoal as string) || ""} onChange={(e) => updateData({ longTermGoal: e.target.value })} />
+                  <Input 
+                    value={(formData.longTermGoal as string) || ""} 
+                    onChange={(e) => updateData({ longTermGoal: e.target.value })} 
+                    placeholder="Describe your long-term career goals"
+                  />
                 </div>
               </div>
             </motion.div>
@@ -302,10 +428,16 @@ export default function OnboardingPage() {
 
         <div className="mt-8 flex justify-between items-center pt-6 border-t border-border">
           {step > 1 ? (
-            <Button variant="ghost" onClick={() => setStep(s => s - 1)}>Back</Button>
+            <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={mutation.isPending}>
+              Back
+            </Button>
           ) : <div></div>}
           
-          <Button onClick={handleNext} disabled={mutation.isPending} className="gap-2">
+          <Button 
+            onClick={handleNext} 
+            disabled={mutation.isPending} 
+            className="gap-2"
+          >
             {mutation.isPending ? "Saving..." : step === 6 ? "Complete Setup" : "Continue"}
             {!mutation.isPending && step < 6 && <Icon name="ArrowRight" size={16} />}
           </Button>
