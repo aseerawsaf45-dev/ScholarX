@@ -71,7 +71,7 @@ export async function signup(formData: FormData) {
       }
     }
 
-    redirect('/auth/verify-email?email=' + encodeURIComponent(email))
+    redirect('/onboarding')
   } catch (err: any) {
     if (err && typeof err === 'object' && err.digest?.startsWith('NEXT_REDIRECT')) {
       throw err;
