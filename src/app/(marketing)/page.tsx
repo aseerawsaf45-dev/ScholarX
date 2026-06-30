@@ -44,11 +44,11 @@ export default function Homepage() {
               variants={fadeUp}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Button variant="premium" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 rounded-xl">
-                Start Growing
+              <Button variant="premium" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 rounded-xl" asChild>
+                <Link href="/onboarding">Start Growing</Link>
               </Button>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 rounded-xl bg-background/50 backdrop-blur-sm">
-                Explore Scholarships
+              <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 rounded-xl bg-background/50 backdrop-blur-sm" asChild>
+                <Link href="/scholarships">Explore Scholarships</Link>
               </Button>
             </motion.div>
           </motion.div>
@@ -266,8 +266,8 @@ export default function Homepage() {
           <p className="text-primary-foreground/80 text-xl max-w-2xl mx-auto mb-10">
             Join thousands of Bangladeshi students building their legacy forest of achievements.
           </p>
-          <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 rounded-xl shadow-premium">
-            Join ScholarX Today
+          <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 rounded-xl shadow-premium" asChild>
+            <Link href="/onboarding">Join ScholarX Today</Link>
           </Button>
         </div>
       </section>

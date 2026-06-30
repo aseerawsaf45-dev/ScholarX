@@ -33,8 +33,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers>
           <TooltipProvider>{children}</TooltipProvider>
         </Providers>

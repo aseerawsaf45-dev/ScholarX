@@ -6,6 +6,7 @@ import { fadeUp } from "@/lib/motion";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function ProfilePage() {
   const { data, isLoading, error } = useQuery({
@@ -14,7 +15,7 @@ export default function ProfilePage() {
       const res = await fetch("/api/profile");
       if (!res.ok) throw new Error("Failed to fetch profile");
       return res.json();
-    }
+    },
   });
 
   if (isLoading) {

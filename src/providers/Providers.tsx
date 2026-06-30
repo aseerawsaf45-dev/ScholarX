@@ -3,8 +3,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
-import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/store/authStore";
+
+import { createClient } from "@/utils/supabase/client";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -16,19 +17,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
     },
   }));
   const setUser = useAuthStore((state) => state.setUser);
-  const supabase = createClient();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    const supabase = createClient();
+    
+    // Get initial session/user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
     });
 
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
-  }, [setUser, supabase.auth]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [setUser]);
 
   return (
     <QueryClientProvider client={queryClient}>

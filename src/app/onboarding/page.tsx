@@ -8,11 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { useOnboardingStore } from "@/store/onboardingStore";
+import { useAuthStore } from "@/store/authStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as z from "zod";
+import { createClient } from "@/utils/supabase/client";
 
 const step1Schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
   educationLevel: z.string().min(1, "Required"),
   hscGpa: z.string().optional(),
   institutionName: z.string().optional(),
@@ -39,12 +43,64 @@ export default function OnboardingPage() {
   const { data: formData, updateData } = useOnboardingStore();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.profile) {
+            const p = data.profile;
+            const existingData = {
+              name: p.name || "",
+              email: p.email || "",
+              educationLevel: p.profile?.educationLevel || "",
+              institutionName: p.profile?.institutionName || "",
+              hscGpa: p.profile?.hscGpa?.toString() || "",
+              country: p.profile?.country || "Bangladesh",
+              city: p.profile?.city || "",
+              familyIncome: p.profile?.familyIncome || "",
+              ielts: p.testScores?.ielts?.toString() || "",
+              toefl: p.testScores?.toefl?.toString() || "",
+              duolingo: p.testScores?.duolingo?.toString() || "",
+              sat: p.testScores?.sat?.toString() || "",
+              gre: p.testScores?.gre?.toString() || "",
+              interests: p.interests?.map((i: any) => i.field) || [],
+              countries: p.countryPreferences?.map((c: any) => c.country) || [],
+              desiredDegree: p.careerGoal?.desiredDegree || "",
+              longTermGoal: p.careerGoal?.longTermGoal || "",
+            };
+            updateData(existingData);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load profile:", e);
+      }
+    }
+    loadProfile();
+  }, [updateData]);
+
   const mutation = useMutation({
     mutationFn: async (stepData: { step: number; data: any }) => {
+      const supabase = createClient();
+      
+      // Update name/metadata in Supabase if on step 1
+      if (stepData.step === 1 && stepData.data.name) {
+        await supabase.auth.updateUser({
+          data: {
+            first_name: stepData.data.name.split(' ')[0],
+            last_name: stepData.data.name.split(' ').slice(1).join(' '),
+          }
+        });
+      }
+
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(stepData),
+        body: JSON.stringify({
+          step: stepData.step,
+          data: stepData.data
+        }),
       });
       if (!res.ok) throw new Error("Failed to save");
       return res.json();
@@ -113,8 +169,18 @@ export default function OnboardingPage() {
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" variants={fadeUp} initial="hidden" animate="visible" exit="hidden">
-              <h2 className="text-2xl font-bold mb-6">Step 1: Academic Information</h2>
+              <h2 className="text-2xl font-bold mb-6">Step 1: Profile & Academic Information</h2>
               <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Your Name</label>
+                  <Input value={(formData.name as string) || ""} onChange={(e) => updateData({ name: e.target.value })} placeholder="Full Name" />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email Address</label>
+                  <Input type="email" value={(formData.email as string) || ""} onChange={(e) => updateData({ email: e.target.value })} placeholder="email@example.com" />
+                  {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                </div>
                 <div>
                   <label className="text-sm font-medium">Education Level</label>
                   <select 

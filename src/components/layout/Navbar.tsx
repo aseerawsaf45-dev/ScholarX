@@ -58,17 +58,19 @@ export function Navbar() {
               <Button variant="ghost" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
-              <form action={signOut}>
-                <Button variant="outline" type="submit">Sign Out</Button>
-              </form>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  signOut();
+                }}
+              >
+                Clear Profile
+              </Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" asChild>
-                <Link href="/auth/login">Sign In</Link>
-              </Button>
               <Button variant="premium" asChild>
-                <Link href="/auth/signup">Get Started</Link>
+                <Link href="/onboarding">Create Profile</Link>
               </Button>
             </>
           )}
@@ -102,17 +104,20 @@ export function Navbar() {
                   <Button variant="outline" className="w-full" asChild>
                     <Link href="/dashboard">Dashboard</Link>
                   </Button>
-                  <form action={signOut} className="w-full">
-                    <Button variant="destructive" type="submit" className="w-full">Sign Out</Button>
-                  </form>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full"
+                    onClick={() => {
+                      signOut();
+                    }}
+                  >
+                    Clear Profile
+                  </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href="/auth/login">Sign In</Link>
-                  </Button>
                   <Button variant="premium" className="w-full" asChild>
-                    <Link href="/auth/signup">Get Started</Link>
+                    <Link href="/onboarding">Create Profile</Link>
                   </Button>
                 </>
               )}
