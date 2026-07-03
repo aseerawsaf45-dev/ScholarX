@@ -30,12 +30,25 @@ export default async function DashboardPage() {
     redirect('/onboarding')
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: resolvedUserId },
-    include: {
-      profile: true,
-    }
-  })
+  let dbUser = null
+  try {
+    dbUser = await prisma.user.findUnique({
+      where: { id: resolvedUserId },
+      include: {
+        profile: true,
+      }
+    })
+  } catch (error) {
+    console.error('Database access error in DashboardPage:', error)
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="max-w-xl text-center">
+          <h1 className="text-2xl font-bold mb-4">Service temporarily unavailable</h1>
+          <p className="text-muted-foreground">We couldn't reach the database. Please check your network or try again later.</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!dbUser?.profile) {
     redirect('/onboarding')

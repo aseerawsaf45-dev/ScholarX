@@ -120,8 +120,8 @@ export async function saveOnboardingStep(step: number, data: any) {
 
     revalidatePath('/dashboard', 'layout')
     return { success: true }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Save step error:", error)
-    return { error: 'Failed to save data' }
+    return { error: 'Failed to save data', message: error?.message }
   }
 }
