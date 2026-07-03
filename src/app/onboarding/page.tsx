@@ -42,12 +42,14 @@ export default function OnboardingPage() {
   const queryClient = useQueryClient();
   const { data: formData, updateData } = useOnboardingStore();
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
       try {
-        const res = await fetch("/api/profile");
+        const res = await fetch("/api/profile", { credentials: 'include' });
         if (res.ok) {
+          setIsAuthenticated(true);
           const data = await res.json();
           if (data?.profile) {
             const p = data.profile;
@@ -71,6 +73,12 @@ export default function OnboardingPage() {
               longTermGoal: p.careerGoal?.longTermGoal || "",
             };
             updateData(existingData);
+          }
+        } else {
+          setIsAuthenticated(false);
+          // If unauthorized, send user to login
+          if (res.status === 401) {
+            router.push('/auth/login');
           }
         }
       } catch (e) {
@@ -96,26 +104,41 @@ export default function OnboardingPage() {
 
       const res = await fetch("/api/onboarding", {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           step: stepData.step,
           data: stepData.data
         }),
       });
-      if (!res.ok) throw new Error("Failed to save");
+
+      if (!res.ok) {
+        let body: any = null;
+        try {
+          body = await res.json();
+        } catch (e) {
+          // ignore JSON parse errors
+        }
+        const message = body?.error || (body?.message ?? "Failed to save");
+        throw new Error(message || `Failed to save (status: ${res.status})`);
+      }
+
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
-    onError: () => {
-      toast.error("Failed to save progress");
+    onError: (error: any) => {
+      console.error("Onboarding save error:", error);
+      const msg = error?.message || "Failed to save progress";
+      toast.error(msg);
     }
   });
 
   // Debounced save
   useEffect(() => {
     const handler = setTimeout(() => {
+      if (isAuthenticated === false) return; // don't attempt saves when not authenticated
       if (Object.keys(formData).length > 0) {
         mutation.mutate({ step, data: formData });
       }

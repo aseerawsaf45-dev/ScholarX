@@ -144,8 +144,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, profile: fullProfile });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Save step error:", error);
-    return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
+    const message = error?.message || 'Failed to save data';
+    return NextResponse.json({ error: 'Failed to save data', message }, { status: 500 });
   }
 }
