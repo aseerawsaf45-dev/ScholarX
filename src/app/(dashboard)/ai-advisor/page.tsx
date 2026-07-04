@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,9 +62,16 @@ export default function AIAdvisorPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] max-w-5xl mx-auto space-y-4 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-heading font-bold tracking-tight">AI Advisor</h1>
-        <p className="text-muted-foreground mt-1">Get personalized guidance, profile feedback, and application strategies from our AI expert.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-heading font-bold tracking-tight">AI Advisor</h1>
+          <p className="text-muted-foreground mt-1">Get personalized guidance, profile feedback, and application strategies from our AI expert.</p>
+        </div>
+        <Button variant="outline" asChild>
+          <Link href="/dashboard">
+            <Icon name="ArrowLeft" className="mr-2" size={16} /> Back to Dashboard
+          </Link>
+        </Button>
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
