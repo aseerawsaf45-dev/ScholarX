@@ -13,7 +13,6 @@ const links = [
   { href: "#features", label: "Features" },
   { href: "#scholarships", label: "Scholarships" },
   { href: "#community", label: "Community" },
-  { href: "#pricing", label: "Pricing" },
 ];
 
 export function Navbar() {
