@@ -1,6 +1,7 @@
 "use client";
 
 import { useScholarshipFilterStore } from "@/store/scholarshipFilterStore";
+import { useSavedScholarshipsStore } from "@/store/savedScholarshipsStore";
 import { DegreeLevel, FundingType } from "@prisma/client";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ const FIELDS = ["Computer Science", "Engineering", "Business", "Medicine", "Arch
 
 export function FiltersSidebar() {
   const filters = useScholarshipFilterStore();
+  const { savedScholarships } = useSavedScholarshipsStore();
 
   const handleFundingToggle = (type: FundingType) => {
     filters.toggleFundingType(type);
@@ -159,6 +161,29 @@ export function FiltersSidebar() {
               <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{field}</span>
             </label>
           ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium text-sm">Saved scholarships</h4>
+          <span className="text-xs font-semibold text-primary">{savedScholarships.length}</span>
+        </div>
+        <div className="space-y-2">
+          {savedScholarships.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Save a scholarship card to see it here.</p>
+          ) : (
+            savedScholarships.map((scholarship) => (
+              <a
+                key={scholarship.id}
+                href={`/scholarships/${scholarship.slug ?? scholarship.id}`}
+                className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground hover:bg-muted/50"
+              >
+                <span className="truncate pr-2">{scholarship.title}</span>
+                <Icon name="BookmarkCheck" size={14} className="text-primary" />
+              </a>
+            ))
+          )}
         </div>
       </div>
     </div>

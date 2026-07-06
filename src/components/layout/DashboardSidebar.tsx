@@ -6,6 +6,7 @@ import { Icon, IconName } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUIStore } from "@/store/uiStore";
+import { useSavedScholarshipsStore } from "@/store/savedScholarshipsStore";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 
@@ -23,6 +24,7 @@ const menuItems: { name: string; href: string; icon: IconName }[] = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { savedScholarships } = useSavedScholarshipsStore();
 
   return (
     <TooltipProvider>
@@ -118,6 +120,32 @@ export function DashboardSidebar() {
 
             return <div key={item.name}>{linkContent}</div>;
           })}
+          {!sidebarCollapsed && (
+            <div className="mt-4 rounded-2xl border border-border/60 bg-background/60 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Saved scholarships
+                </h3>
+                <span className="text-xs font-semibold text-primary">{savedScholarships.length}</span>
+              </div>
+              <div className="space-y-2">
+                {savedScholarships.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Save a scholarship to see it here.</p>
+                ) : (
+                  savedScholarships.map((scholarship) => (
+                    <Link
+                      key={scholarship.id}
+                      href={`/scholarships/${scholarship.slug ?? scholarship.id}`}
+                      className="flex items-center justify-between rounded-lg border border-border/60 bg-background/70 px-2.5 py-2 text-sm text-foreground hover:bg-muted/50"
+                    >
+                      <span className="truncate pr-2">{scholarship.title}</span>
+                      <Icon name="BookmarkCheck" size={14} className="text-primary shrink-0" />
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </nav>
 
         <div className="p-3 border-t border-border shrink-0">
