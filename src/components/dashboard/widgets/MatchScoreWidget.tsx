@@ -47,7 +47,7 @@ export function MatchScoreWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
           Latest Match Score
-          <Icon name="PieChart" size={16} className="text-primary/70" />
+          <Icon name="ChartNoAxesCombined" size={16} className="text-primary/70" />
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col justify-center space-y-6">
