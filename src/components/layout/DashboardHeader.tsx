@@ -6,6 +6,7 @@ import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { NotificationDropdown } from "@/components/shared/NotificationDropdown";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,12 +19,28 @@ import {
 import { signOut } from "@/app/auth/actions";
 
 export function DashboardHeader() {
+  const router = useRouter();
   const { toggleSearchPalette } = useUIStore();
   const { theme, setTheme } = useTheme();
   const user = useAuthStore((state) => state.user);
 
+  const handleProfile = () => {
+    router.push("/profile");
+  };
+
+  const handleSettings = () => {
+    router.push("/settings");
+  };
+
+  const handleResetProfile = () => {
+    // if (window.confirm("This will take you back to onboarding so you can rebuild your profile. Continue?")) {
+      router.push("/onboarding");
+    // }
+  };
+
   const handleLogout = async () => {
     await signOut();
+    router.push("/auth/login");
   };
 
   const userInitial = user?.user_metadata?.first_name?.[0] || user?.email?.[0] || "S";
@@ -75,16 +92,16 @@ export function DashboardHeader() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProfile}>
               <Icon name="User" className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSettings}>
               <Icon name="Settings" className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
+            <DropdownMenuItem onClick={handleResetProfile}>
               <Icon name="LogOut" className="mr-2 h-4 w-4" />
               <span>Reset Profile</span>
             </DropdownMenuItem>
