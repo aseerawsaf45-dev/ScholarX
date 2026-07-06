@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 const MOCK_AI_REC = {
   scholarship: "Eiffel Excellence Scholarship",
@@ -12,6 +13,8 @@ const MOCK_AI_REC = {
 };
 
 export function AIRecommendationsWidget() {
+  const router = useRouter();
+
   return (
     <Card className="h-full flex flex-col bg-primary/5 border-primary/20 relative overflow-hidden group">
       {/* Decorative background glow */}
@@ -36,7 +39,11 @@ export function AIRecommendationsWidget() {
           </p>
         </div>
         
-        <Button className="w-full text-xs h-8" variant="default">
+        <Button
+          className="w-full text-xs h-8"
+          variant="default"
+          onClick={() => router.push("/scholarships")}
+        >
           Review & Apply <Icon name="ArrowRight" className="ml-1" size={14} />
         </Button>
       </CardContent>
