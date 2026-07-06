@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export function ProfileCompletionWidget() {
+  const router = useRouter();
   const { data, isLoading, isError } = useDashboardData();
   const progress = data?.userProgress;
 
@@ -68,7 +70,11 @@ export function ProfileCompletionWidget() {
                 <p className="text-xs text-center text-muted-foreground">
                   Complete your profile to unlock personalized AI recommendations.
                 </p>
-                <Button className="w-full text-xs h-8" variant="default">
+                <Button
+                  className="w-full text-xs h-8"
+                  variant="default"
+                  onClick={() => router.push("/onboarding")}
+                >
                   Fix Missing Fields
                 </Button>
               </div>
