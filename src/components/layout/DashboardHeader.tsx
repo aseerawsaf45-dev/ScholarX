@@ -102,8 +102,13 @@ export function DashboardHeader() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleResetProfile}>
-              <Icon name="LogOut" className="mr-2 h-4 w-4" />
+              <Icon name="RefreshCw" className="mr-2 h-4 w-4" />
               <span>Reset Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <Icon name="LogOut" className="mr-2 h-4 w-4" />
+              <span>Logout</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
