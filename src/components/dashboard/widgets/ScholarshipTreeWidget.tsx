@@ -94,24 +94,41 @@ function TreeStageVisual({ stage, progress }: { stage: string; progress: number 
 
   const radius = 52;
   const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - progress / 100);
+
 
   return (
     <div className="relative group flex flex-col items-center">
       <div className="relative w-36 h-36 flex items-center justify-center">
-        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="5" opacity="0.35" />
+        <svg
+          className="absolute inset-0 w-full h-full -rotate-90 z-10"
+          viewBox="0 0 120 120"
+        >
+          {/* Background */}
+          <circle
+            cx="60"
+            cy="60"
+            r={radius}
+            fill="none"
+            stroke="currentColor"
+            className="text-muted-foreground"
+            strokeWidth="5"
+            opacity={0.25}
+          />
+
           <motion.circle
             cx="60"
             cy="60"
             r={radius}
             fill="none"
-            stroke="hsl(var(--primary))"
+            stroke="currentColor"
+            className="text-primary"
             strokeWidth="5"
             strokeLinecap="round"
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset: circumference * (1 - progress / 100) }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 1 }}
           />
         </svg>
         <div className="relative flex items-center justify-center bg-card/40 backdrop-blur-md border border-border/50 rounded-full w-28 h-28 shadow-inner">
