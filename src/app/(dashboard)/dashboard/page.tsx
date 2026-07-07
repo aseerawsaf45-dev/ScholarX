@@ -66,33 +66,32 @@ export default async function DashboardPage() {
       </div>
 
       <DashboardGrid>
-        {/* Top Row: Tree + Key Stats */}
-        <Widget colSpan={8}>
-          <ScholarshipTreeWidget />
-        </Widget>
-        <Widget colSpan={4} className="space-y-6">
-          <div className="h-[calc(50%-12px)]">
-            <ProfileCompletionWidget />
-          </div>
-          <div className="h-[calc(50%-12px)]">
-            <MatchScoreWidget />
-          </div>
-        </Widget>
 
-        {/* Middle Row: AI & Deadlines */}
-        <Widget colSpan={6}>
-          <AIRecommendationsWidget />
-        </Widget>
-        <Widget colSpan={6}>
+        {/* Middle Row: AI Suggestions (Bigger) & Roadmap */}
+        <Widget colSpan={4}>
           <UpcomingDeadlinesWidget />
         </Widget>
+        <Widget colSpan={4}>
+          <AIRecommendationsWidget />
+        </Widget>
+        <Widget colSpan={4}>
+          <ScholarshipTreeWidget />
+        </Widget>
 
-        {/* Bottom Row: Roadmap & Activity */}
+
+        {/* Bottom Row: Upcoming Deadlines (Bigger) & Recent Activity */}
         <Widget colSpan={6}>
           <RoadmapWidget />
         </Widget>
         <Widget colSpan={6}>
           <RecentActivityWidget />
+        </Widget>
+        {/* Top Row: Key stats & Your Journey (Smaller) */}
+        <Widget colSpan={4}>
+          <ProfileCompletionWidget />
+        </Widget>
+        <Widget colSpan={4}>
+          <MatchScoreWidget />
         </Widget>
       </DashboardGrid>
     </div>

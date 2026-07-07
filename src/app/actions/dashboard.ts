@@ -101,7 +101,8 @@ export async function getUpcomingDeadlines() {
       id: s.scholarship.id,
       name: s.scholarship.title,
       applicationDeadline: s.scholarship.deadline,
-      provider: s.scholarship.provider
+      provider: s.scholarship.provider,
+      status: s.status
     }))
     .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
     .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())
@@ -178,7 +179,8 @@ export async function getDashboardData() {
       id: s.scholarship.id,
       name: s.scholarship.title,
       applicationDeadline: s.scholarship.deadline,
-      provider: s.scholarship.provider
+      provider: s.scholarship.provider,
+      status: s.status
     }))
     .filter(s => s.applicationDeadline && new Date(s.applicationDeadline) > new Date())
     .sort((a, b) => new Date(a.applicationDeadline!).getTime() - new Date(b.applicationDeadline!).getTime())

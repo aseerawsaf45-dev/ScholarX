@@ -1,15 +1,17 @@
 "use client";
+
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Icon } from "@/components/ui/icon";
 
-function TreeStageVisual({ stage }: { stage: string }) {
+function TreeStageVisual({ stage, progress }: { stage: string; progress: number }) {
   const getStageSvg = () => {
     switch (stage) {
       case "SEED":
         return (
-          <svg viewBox="0 0 200 200" className="w-48 h-48 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 200" className="w-24 h-24 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M 40 150 Q 100 135 160 150" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
             <circle cx="100" cy="140" r="10" fill="currentColor" className="animate-pulse" />
             <path d="M 100 130 C 100 120 102 115 105 110" stroke="var(--secondary)" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
@@ -17,7 +19,7 @@ function TreeStageVisual({ stage }: { stage: string }) {
         );
       case "SPROUT":
         return (
-          <svg viewBox="0 0 200 200" className="w-48 h-48 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 200" className="w-24 h-24 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M 40 150 Q 100 135 160 150" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
             <path d="M 100 145 C 98 120 102 90 110 70" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
             <path d="M 110 70 C 120 70 125 78 122 85 C 115 88 110 82 110 70" fill="var(--secondary)" />
@@ -26,7 +28,7 @@ function TreeStageVisual({ stage }: { stage: string }) {
         );
       case "SAPLING":
         return (
-          <svg viewBox="0 0 200 200" className="w-48 h-48 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 200" className="w-24 h-24 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M 40 150 Q 100 135 160 150" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
             <path d="M 100 148 C 100 120 95 90 100 60" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
             <path d="M 98 100 C 85 90 70 85 60 90" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -38,7 +40,7 @@ function TreeStageVisual({ stage }: { stage: string }) {
         );
       case "GROWING_TREE":
         return (
-          <svg viewBox="0 0 200 200" className="w-48 h-48 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 200" className="w-24 h-24 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M 40 160 Q 100 145 160 160" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
             <path d="M 100 158 C 100 115 90 85 105 50" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
             <path d="M 98 110 C 75 95 55 90 40 100" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
@@ -52,7 +54,7 @@ function TreeStageVisual({ stage }: { stage: string }) {
         );
       case "SCHOLARSHIP_TREE":
         return (
-          <svg viewBox="0 0 200 200" className="w-48 h-48 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 200" className="w-24 h-24 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M 30 160 Q 100 145 170 160" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
             <path d="M 100 158 C 100 115 90 75 102 45" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
             <path d="M 96 105 C 70 90 45 85 30 95" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
@@ -70,7 +72,7 @@ function TreeStageVisual({ stage }: { stage: string }) {
       case "LEGACY_FOREST":
       default:
         return (
-          <svg viewBox="0 0 200 200" className="w-48 h-48 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 200" className="w-24 h-24 text-primary" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M 20 160 Q 100 150 180 160" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
             <g opacity="0.6">
               <path d="M 60 158 V 100" stroke="currentColor" strokeWidth="4" />
@@ -90,11 +92,52 @@ function TreeStageVisual({ stage }: { stage: string }) {
     }
   };
 
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - progress / 100);
+
+
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-6 relative min-h-[300px]">
-      <div className="relative flex items-center justify-center bg-card/40 backdrop-blur-md border border-border/50 rounded-full w-56 h-56 shadow-inner">
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-secondary/5 rounded-full blur-xl" />
-        {getStageSvg()}
+    <div className="relative group flex flex-col items-center">
+      <div className="relative w-36 h-36 flex items-center justify-center">
+        <svg
+          className="absolute inset-0 w-full h-full -rotate-90 z-10"
+          viewBox="0 0 120 120"
+        >
+          {/* Background */}
+          <circle
+            cx="60"
+            cy="60"
+            r={radius}
+            fill="none"
+            stroke="currentColor"
+            className="text-muted-foreground"
+            strokeWidth="5"
+            opacity={0.25}
+          />
+
+          <motion.circle
+            cx="60"
+            cy="60"
+            r={radius}
+            fill="none"
+            stroke="currentColor"
+            className="text-primary"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 1 }}
+          />
+        </svg>
+        <div className="relative flex items-center justify-center bg-card/40 backdrop-blur-md border border-border/50 rounded-full w-28 h-28 shadow-inner">
+          <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-secondary/5 rounded-full blur-xl animate-pulse" />
+          {getStageSvg()}
+        </div>
+      </div>
+      <div className="absolute top-full mt-2 px-3 py-2 rounded-md border bg-popover text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+        Complete tasks to grow your scholarship tree.
       </div>
     </div>
   );
@@ -106,9 +149,9 @@ export function ScholarshipTreeWidget() {
 
   if (isLoading) {
     return (
-      <Card className="h-full min-h-[400px]">
+      <Card className="h-full">
         <CardContent className="h-full flex items-center justify-center p-0">
-          <Skeleton className="w-full h-full rounded-xl" />
+          <Skeleton className="w-full h-48 rounded-xl" />
         </CardContent>
       </Card>
     );
@@ -116,7 +159,7 @@ export function ScholarshipTreeWidget() {
 
   if (isError || !progress) {
     return (
-      <Card className="h-full min-h-[400px]">
+      <Card className="h-full">
         <CardContent className="h-full flex items-center justify-center">
           <p className="text-muted-foreground text-sm">Failed to load tree data.</p>
         </CardContent>
@@ -125,46 +168,29 @@ export function ScholarshipTreeWidget() {
   }
 
   return (
-    <Card className="h-full min-h-[400px] lg:min-h-[500px] overflow-hidden relative group">
-      <CardContent className="p-0 h-full relative bg-gradient-to-b from-primary/5 to-background flex flex-col justify-between">
-        
-        {/* Overlay UI - Title */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-6 pb-0 z-10 pointer-events-none"
-        >
-          <h3 className="font-heading font-bold text-2xl tracking-tight">Your Journey</h3>
-          <p className="text-muted-foreground text-sm flex items-center gap-2 mt-1">
-            Stage: <span className="text-primary font-semibold uppercase">{progress.growthStage.replace("_", " ")}</span>
-          </p>
-        </motion.div>
+    <Card className="h-full bg-gradient-to-br from-background to-muted/20 flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+          Your Journey
+          <Icon name="Sprout" size={16} className="text-primary/70" />
+        </CardTitle>
+      </CardHeader>
 
-        {/* Dynamic Vector Tree stage visualization */}
+      <CardContent className="flex-1 flex flex-col justify-between py-2">
+        {/* Compact Tree visual */}
         <div className="flex-1 flex items-center justify-center">
-          <TreeStageVisual stage={progress.growthStage} />
+          <TreeStageVisual stage={progress.growthStage} progress={progress.growthPercent} />
         </div>
 
-        {/* Overlay UI - Progress Badge */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="p-6 pt-0 z-10 flex justify-center pointer-events-none"
-        >
-          <div className="bg-background/85 backdrop-blur-md px-6 py-2 rounded-full border border-border shadow-sm flex items-center gap-3 w-fit">
-            <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${progress.growthPercent}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="h-full bg-primary"
-              />
-            </div>
-            <span className="font-bold text-sm">{progress.growthPercent}% to Next Level</span>
-          </div>
-        </motion.div>
-
+        {/* Stage display */}
+        <div className="mt-4 text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+            {progress.growthStage.replaceAll("_", " ")}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {progress.growthPercent}% Complete
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
