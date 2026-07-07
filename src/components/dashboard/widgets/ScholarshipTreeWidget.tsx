@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Icon } from "@/components/ui/icon";
 
-function TreeStageVisual({ stage }: { stage: string }) {
+function TreeStageVisual({ stage, progress }: { stage: string; progress: number }) {
   const getStageSvg = () => {
     switch (stage) {
       case "SEED":
@@ -92,11 +92,35 @@ function TreeStageVisual({ stage }: { stage: string }) {
     }
   };
 
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+
   return (
-    <div className="w-full flex flex-col items-center justify-center p-2 relative">
-      <div className="relative flex items-center justify-center bg-card/40 backdrop-blur-md border border-border/50 rounded-full w-28 h-28 shadow-inner">
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-secondary/5 rounded-full blur-xl animate-pulse" />
-        {getStageSvg()}
+    <div className="relative group flex flex-col items-center">
+      <div className="relative w-36 h-36 flex items-center justify-center">
+        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="5" opacity="0.35" />
+          <motion.circle
+            cx="60"
+            cy="60"
+            r={radius}
+            fill="none"
+            stroke="hsl(var(--primary))"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: circumference * (1 - progress / 100) }}
+            transition={{ duration: 1, ease: "easeOut" }}
+          />
+        </svg>
+        <div className="relative flex items-center justify-center bg-card/40 backdrop-blur-md border border-border/50 rounded-full w-28 h-28 shadow-inner">
+          <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-secondary/5 rounded-full blur-xl animate-pulse" />
+          {getStageSvg()}
+        </div>
+      </div>
+      <div className="absolute top-full mt-2 px-3 py-2 rounded-md border bg-popover text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+        Complete tasks to grow your scholarship tree.
       </div>
     </div>
   );
@@ -138,27 +162,16 @@ export function ScholarshipTreeWidget() {
       <CardContent className="flex-1 flex flex-col justify-between py-2">
         {/* Compact Tree visual */}
         <div className="flex-1 flex items-center justify-center">
-          <TreeStageVisual stage={progress.growthStage} />
+          <TreeStageVisual stage={progress.growthStage} progress={progress.growthPercent} />
         </div>
 
-        {/* Compact progress display */}
-        <div className="space-y-2 mt-2 w-full">
-          <div className="flex justify-between text-xs font-semibold">
-            <span className="text-muted-foreground">
-              Stage: <span className="text-primary uppercase">{progress.growthStage.replace("_", " ")}</span>
-            </span>
-            <span>{progress.growthPercent}%</span>
-          </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress.growthPercent}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="h-full bg-primary"
-            />
-          </div>
-          <p className="text-[10px] text-center text-muted-foreground">
-            Complete tasks to grow your scholarship tree.
+        {/* Stage display */}
+        <div className="mt-4 text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+            {progress.growthStage.replaceAll("_", " ")}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {progress.growthPercent}% Complete
           </p>
         </div>
       </CardContent>
