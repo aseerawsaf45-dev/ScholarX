@@ -134,7 +134,7 @@ export function ScholarshipTreeWidget() {
           <Icon name="Sprout" size={16} className="text-primary/70" />
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="flex-1 flex flex-col justify-between py-2">
         {/* Compact Tree visual */}
         <div className="flex-1 flex items-center justify-center">
@@ -150,7 +150,7 @@ export function ScholarshipTreeWidget() {
             <span>{progress.growthPercent}%</span>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress.growthPercent}%` }}
               transition={{ duration: 1, ease: "easeOut" }}

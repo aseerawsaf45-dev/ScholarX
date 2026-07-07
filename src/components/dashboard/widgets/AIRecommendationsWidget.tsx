@@ -30,14 +30,14 @@ export function AIRecommendationsWidget() {
     <Card className="h-full flex flex-col bg-primary/5 border-primary/20 relative overflow-hidden group">
       {/* Decorative background glow */}
       <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary/20 blur-3xl rounded-full pointer-events-none" />
-      
+
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold text-primary flex items-center justify-between">
           AI Suggestion
           <Icon name="Sparkles" size={16} className="text-primary animate-pulse" />
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="flex-1 flex flex-col md:flex-row gap-6 justify-between">
         {/* Left Side: Scholarship Information and Match Factors */}
         <div className="flex-1 flex flex-col justify-between space-y-4">
@@ -50,12 +50,12 @@ export function AIRecommendationsWidget() {
                 <p className="text-xs text-muted-foreground mt-0.5">{MOCK_AI_REC.provider}</p>
               </div>
             </div>
-            
+
             <p className="text-xs text-muted-foreground leading-relaxed mt-2">
               {MOCK_AI_REC.reasoning}
             </p>
           </div>
-          
+
           {/* Key Match Factors Grid */}
           <div className="space-y-2">
             <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -63,8 +63,8 @@ export function AIRecommendationsWidget() {
             </h5>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {MATCH_FACTORS.map((factor, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="flex items-start gap-2 bg-background/50 backdrop-blur-sm p-2 rounded-lg border border-border/40"
                 >
                   <Icon name="CheckCircle2" size={14} className="text-green-500 mt-0.5 shrink-0" />
@@ -79,7 +79,7 @@ export function AIRecommendationsWidget() {
             </div>
           </div>
         </div>
-        
+
         {/* Right Side: Animated Radial Progress Gauge and CTA */}
         <div className="w-full md:w-44 shrink-0 flex flex-col justify-between items-center bg-background/40 backdrop-blur-md p-4 rounded-xl border border-border/50 gap-4">
           <div className="flex-1 flex items-center justify-center py-2">
@@ -115,7 +115,7 @@ export function AIRecommendationsWidget() {
               </div>
             </div>
           </div>
-          
+
           <Button
             className="w-full text-xs h-8 font-semibold shadow-sm hover:shadow"
             variant="default"

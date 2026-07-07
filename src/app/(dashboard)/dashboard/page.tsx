@@ -66,31 +66,32 @@ export default async function DashboardPage() {
       </div>
 
       <DashboardGrid>
+
+        {/* Middle Row: AI Suggestions (Bigger) & Roadmap */}
+        <Widget colSpan={4}>
+          <UpcomingDeadlinesWidget />
+        </Widget>
+        <Widget colSpan={4}>
+          <AIRecommendationsWidget />
+        </Widget>
+        <Widget colSpan={4}>
+          <ScholarshipTreeWidget />
+        </Widget>
+
+
+        {/* Bottom Row: Upcoming Deadlines (Bigger) & Recent Activity */}
+        <Widget colSpan={6}>
+          <RoadmapWidget />
+        </Widget>
+        <Widget colSpan={6}>
+          <RecentActivityWidget />
+        </Widget>
         {/* Top Row: Key stats & Your Journey (Smaller) */}
         <Widget colSpan={4}>
           <ProfileCompletionWidget />
         </Widget>
         <Widget colSpan={4}>
           <MatchScoreWidget />
-        </Widget>
-        <Widget colSpan={4}>
-          <ScholarshipTreeWidget />
-        </Widget>
-
-        {/* Middle Row: AI Suggestions (Bigger) & Roadmap */}
-        <Widget colSpan={8}>
-          <AIRecommendationsWidget />
-        </Widget>
-        <Widget colSpan={4}>
-          <RoadmapWidget />
-        </Widget>
-
-        {/* Bottom Row: Upcoming Deadlines (Bigger) & Recent Activity */}
-        <Widget colSpan={8}>
-          <UpcomingDeadlinesWidget />
-        </Widget>
-        <Widget colSpan={4}>
-          <RecentActivityWidget />
         </Widget>
       </DashboardGrid>
     </div>

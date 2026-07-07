@@ -28,7 +28,7 @@ export function UpcomingDeadlinesWidget() {
           <Icon name="Calendar" size={16} className="text-primary/70" />
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="flex-1 overflow-y-auto pr-2">
         {deadlines.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-8">
@@ -50,7 +50,7 @@ export function UpcomingDeadlinesWidget() {
             {/* List of deadline items */}
             {deadlines.map((scholarship) => {
               const daysLeft = differenceInDays(new Date(scholarship.applicationDeadline!), new Date());
-              
+
               let colorClass = "text-green-500 bg-green-500/10 border-green-500/20";
               if (daysLeft <= 7) colorClass = "text-red-500 bg-red-500/10 border-red-500/20";
               else if (daysLeft <= 30) colorClass = "text-yellow-500 bg-yellow-500/10 border-yellow-500/20";
@@ -59,8 +59,8 @@ export function UpcomingDeadlinesWidget() {
               const statusValue = (scholarship as any).status || "saved";
 
               return (
-                <Link 
-                  href={`/scholarships/${scholarship.id}`} 
+                <Link
+                  href={`/scholarships/${scholarship.id}`}
                   key={scholarship.id}
                   className="flex items-center justify-between group p-3 rounded-xl hover:bg-muted/50 border border-transparent hover:border-border/30 transition-all gap-4"
                 >
@@ -70,23 +70,23 @@ export function UpcomingDeadlinesWidget() {
                     </h4>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">{scholarship.provider}</p>
                   </div>
-                  
+
                   <div className="flex items-center gap-4 shrink-0 min-w-[210px] justify-between">
                     {/* Status badge centered */}
                     <div className="w-[100px] flex justify-center shrink-0">
-                      <Badge 
+                      <Badge
                         variant={
                           statusValue === "submitted" ? "default" :
-                          statusValue === "applying" ? "secondary" :
-                          statusValue === "rejected" ? "destructive" :
-                          "outline"
-                        } 
+                            statusValue === "applying" ? "secondary" :
+                              statusValue === "rejected" ? "destructive" :
+                                "outline"
+                        }
                         className="capitalize text-[10px]"
                       >
                         {statusValue}
                       </Badge>
                     </div>
-                    
+
                     {/* Time remaining badge */}
                     <div className={`shrink-0 flex flex-col items-end px-2.5 py-1 rounded-lg border ${colorClass} w-[90px]`}>
                       <span className="text-xs font-bold leading-tight">{daysLeft}d left</span>
