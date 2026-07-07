@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { askAdvisor } from "@/app/actions/advisor";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/utils/supabase/client";
 
 type Message = {
   role: "user" | "assistant";
@@ -46,8 +47,20 @@ export default function AIAdvisorPage() {
     setInput("");
     setIsLoading(true);
 
-    try {
-      const response = await askAdvisor("user-session", updatedMessages);
+    try {    // Get the currently authenticated user
+      const supabase = createClient();
+
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        throw new Error("User is not logged in.");
+      }
+
+      // Pass the real Supabase user ID
+      const response = await askAdvisor(user.id, updatedMessages);
       setMessages(prev => [...prev, { role: "assistant", content: response }]);
     } catch (e) {
       console.error(e);
@@ -85,25 +98,22 @@ export default function AIAdvisorPage() {
                   key={idx}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-3 max-w-[85%] ${
-                    m.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
-                  }`}
+                  className={`flex gap-3 max-w-[85%] ${m.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
+                    }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${
-                      m.role === "user"
-                        ? "bg-primary/10 border-primary/20 text-primary"
-                        : "bg-secondary/20 border-secondary/30 text-secondary"
-                    }`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${m.role === "user"
+                      ? "bg-primary/10 border-primary/20 text-primary"
+                      : "bg-secondary/20 border-secondary/30 text-secondary"
+                      }`}
                   >
                     <Icon name={m.role === "user" ? "User" : "Bot"} size={16} />
                   </div>
                   <div
-                    className={`rounded-2xl p-4 text-sm leading-relaxed ${
-                      m.role === "user"
-                        ? "bg-primary text-primary-foreground font-medium rounded-tr-none"
-                        : "bg-muted text-foreground border border-border/40 rounded-tl-none prose dark:prose-invert max-w-none"
-                    }`}
+                    className={`rounded-2xl p-4 text-sm leading-relaxed ${m.role === "user"
+                      ? "bg-primary text-primary-foreground font-medium rounded-tr-none"
+                      : "bg-muted text-foreground border border-border/40 rounded-tl-none prose dark:prose-invert max-w-none"
+                      }`}
                   >
                     {/* Render markdown headers/lists simply */}
                     {m.content.split("\n").map((line, lIdx) => {

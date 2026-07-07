@@ -4,16 +4,17 @@ import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import prisma from "@/lib/prisma";
 
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY || '',
+const openrouter = createOpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 export async function askAdvisor(userId: string, messages: { role: "user" | "assistant"; content: string }[]) {
   try {
-    if (!process.env.GROQ_API_KEY) {
+    if (!process.env.OPENROUTER_API_KEY) {
       return getFallbackAdvice(messages[messages.length - 1].content);
     }
+    // console.log("OPENROUTER_API_KEY:", process.env.OPENROUTER_API_KEY);
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -24,6 +25,8 @@ export async function askAdvisor(userId: string, messages: { role: "user" | "ass
         careerGoal: true,
       }
     });
+
+    console.log(user);
 
     const userContext = user ? `
 User Profile context:
@@ -119,6 +122,12 @@ Use tables wherever useful.
 Use checklists.
 Use timelines.
 Be encouraging but realistic.
+No comments
+No jargons
+No non-ascii character
+No emojis
+No (*# or .md like special characters)
+Just Plain text
 
 OUTPUT STYLE
 ------------------------------------------------------------
@@ -130,7 +139,7 @@ ${userContext}
 `;
 
     const { text } = await generateText({
-      model: groq('llama3-8b-8192'),
+      model: openrouter("meta-llama/llama-3.2-3b-instruct:free"),
       system: systemPrompt,
       prompt: messages.map(m => `${m.role === "user" ? "User" : "Advisor"}: ${m.content}`).join("\n") + "\nAdvisor:",
     });
@@ -144,7 +153,7 @@ ${userContext}
 
 function getFallbackAdvice(userQuery: string): string {
   const query = userQuery.toLowerCase();
-  
+
   if (query.includes("sop") || query.includes("statement of purpose")) {
     return `### 📝 Statement of Purpose (SOP) Writing Guide
 Since you asked about SOPs, here is a structured outline to write a winning Statement of Purpose for international scholarships:
@@ -157,7 +166,7 @@ Since you asked about SOPs, here is a structured outline to write a winning Stat
 
 *Tip: Keep it between 800 - 1000 words unless specified otherwise. Make sure to get it reviewed by peers or use the **Documents** reviewer section!*`;
   }
-  
+
   if (query.includes("ielts") || query.includes("toefl") || query.includes("english")) {
     return `### 🇬🇧 English Proficiency Prep Guide
 To score a 7.5+ band score on your IELTS or equivalent TOEFL, follow this structured prep:
