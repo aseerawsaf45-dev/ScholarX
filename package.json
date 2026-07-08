@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test-embeddings": "npx tsx --env-file=.env.local scripts/test-embeddings.ts",
+    "generate-embeddings": "npx tsx --env-file=.env.local scripts/generate-embeddings.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.90",
